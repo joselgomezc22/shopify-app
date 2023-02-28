@@ -1,0 +1,38 @@
+.fixed-bar {
+  display: none;
+  animation: myAnimation 1s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+  transition: display 1s;
+  position: fixed;
+  bottom: 5%;
+  right: 2%;
+  background: $green;
+  width: auto;
+  &.active {
+    display: block;
+  }
+}
+.fixed-bar-bulk {
+  width: 10%;
+  bottom: 25%;
+  background-color: red;
+  transition: all 0.5s ease-in-out;
+  
+  @extend .fixed-bar;
+  &:hover {
+    width: 50%;
+  }
+  &.active {
+    display: block;
+  }
+}
+
+@keyframes myAnimation {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

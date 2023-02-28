@@ -1,0 +1,42 @@
+{
+    "front_index_path" : "/frontend/",
+    "app_info" : {
+        "name" : "Node baseline app",
+        "desc" : "Base App for publics Sizzle Commerce Apps development",
+        "api_version" : ""
+    },
+    "server_domain" : "https://fcb4-181-234-209-18.ngrok.io",
+    "billing_type": "RecurringApplicationCharge",
+    "recurring_plans" : [
+        {
+            "name":"Super Duper Plan",
+            "price":10.00,
+            "return_url":"/subscribed_plan",
+            "test": true,
+            "extra_info": {"plan_number":4,"plan_level":4,"alias":"Most expensive plan"}
+        },
+        { 
+            "name":"Gold Plan",
+            "price":5.0,
+            "return_url":"/subscribed_plan",
+            "test": true,
+            "extra_info": {"plan_number":3,"plan_level":3,"alias":"Medium expensive plan"}
+        },
+        {
+            "name":"Silver Plan",
+            "price":10.0,
+            "return_url":"/subscribed_plan",
+            "test": true,
+            "default" : true,
+            "extra_info": {"plan_number":2,"plan_level":2,"alias":"Medium limited plan"}
+        },
+        {
+            "name":"Platinum Plan",
+            "price":15.0,
+            "return_url":"/subscribed_plan",
+            "test": true,
+            "extra_info": {"plan_number":1,"plan_level":1,"alias":"Limited plan"}
+        }
+    ],
+    "scopes" : "write_products, write_themes, read_themes, read_themes, write_themes,read_inventory,write_inventory"
+}

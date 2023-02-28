@@ -1,0 +1,24 @@
+import { useState , useRef ,useEffect } from "react";
+import {
+  Card,
+  Heading,
+  TextContainer,
+  DisplayText,
+  TextStyle,
+  Button
+} from "@shopify/polaris";
+import { Toast } from "@shopify/app-bridge-react";
+import { useAppQuery, useAuthenticatedFetch } from "../hooks";
+
+export const VisualMerchant = () => {
+  const fetch = useAuthenticatedFetch();
+  return (
+    <Page narrowWidth>
+    <TitleBar title="App name" primaryAction={null} />
+    <Layout>
+      
+     
+    </Layout>
+  </Page>
+  )
+}

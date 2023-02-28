@@ -1,0 +1,12 @@
+.plans_grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.plans_grid__item {
+    flex: 0 0 25%;
+    width: 25%;
+}
+.plans_grid__item div {
+    padding: 5%;
+}

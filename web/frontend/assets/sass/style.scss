@@ -1,0 +1,29 @@
+$green: var(--p-action-primary);
+
+@import './fixed-bar.scss';
+
+.selected {
+  border: solid $green 1px;
+  box-shadow: 1px 1px 1px $green, 5px 5px 3px rgb(247, 247, 247),
+    8px 8px 5px lightblue, 8px 8px 5px $green inset, -8px -8px 5px $green inset;
+  border-radius: var(--p-border-radius-2);
+}
+
+.Polaris-Card {
+  height: 100%;
+}
+.Polaris-Grid-Cell { 
+  transition: all 0.5s;
+}
+.hidden {
+  display: none;
+}
+
+.margin-top {
+  margin-top: var(--p-space-5);
+}
+
+
+
+
+
