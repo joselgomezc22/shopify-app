@@ -16,6 +16,7 @@ import { useAuthenticatedFetch } from "../../hooks";
 import ReorderHelper from "../../hooks/reorderHelper";
 
 import Sortable, { MultiDrag, Swap } from "sortablejs";
+import { useSelector } from "react-redux";
 
 const ProductsRender = ({
   allProducts,
@@ -49,6 +50,9 @@ const ProductsRender = ({
   const [selectedItemsBackup, setSelectedItemsBackup] = useState([]); // selected Items
   const [toChangeItems, setToChangeItems] = useState([]); // array of changed items
 
+  //redux state
+  const filterState = useSelector(state => state.filter) 
+
   const [valueNumber, setValueNumber] = useState(0);
   const reorderHelper = new ReorderHelper();
   const handleChangeNumber = useCallback(
@@ -72,10 +76,24 @@ const ProductsRender = ({
     }
   }, []); 
   
+  useEffect(_ => {
+    console.log(filterState)
+    switch(filterState.filter){
+      case "price":
+        switch(filterState.order){
+          case "asc":
+            setProductsArray([...productsArray.sort((a,b) => a.variants[0].price.localeCompare(b.variants[0].price))])
+            break
+          case "desc":
+            setProductsArray([...productsArray.sort((a,b) => b.variants[0].price.localeCompare(a.variants[0].price))])
+            break
+        }
+    }
+    console.log(productsArray)
+  },[filterState])
   useEffect(() => {
     if (displaySettings.selectedItems && displaySettings.selectedItems.length > 0) {
       let reOrdered = reorderHelper.init(displaySettings,productsArray,{productPerPage,currentPage});
-
       if(reOrdered.length > 0) {
         setProductsArray(reOrdered);
       }

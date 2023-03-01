@@ -12,7 +12,7 @@ import {
   FormLayout,
   TextField,
 } from "@shopify/polaris";
-import { SearchMajor, ArrowUpMinor } from "@shopify/polaris-icons";
+import { SearchMajor, ArrowUpMinor, SearchMinor } from "@shopify/polaris-icons";
 const SearchResults = ({
   productWithVariants,
   displaySettings,
@@ -180,18 +180,27 @@ const SearchResults = ({
         title="Custom search by tags, title or sku code"
       >
         <Modal.Section>
-          <TextField
-            label="Search Term"
-            value={searchTerm}
-            onChange={handleChangeSearchTerm}
-            autoComplete="off"
-          />
-          <Button
-            onClick={() => {
-              doSearch(searchTerm, allProducts);
-            }}
-            icon={SearchMajor}
-          ></Button>
+          <Form onSubmit={_ => void doSearch(searchTerm, allProducts)}>
+            <FormLayout>
+              <TextField
+                prefix={<Icon source={SearchMinor}/>}
+                placeholder="Type terms..."
+                label="Search Term"
+                value={searchTerm}
+                onChange={handleChangeSearchTerm}
+                autoComplete="off"
+                helpText="Press intro to search"
+                connectedRight={<Button submit primary>Search</Button>}
+              />
+              {/* <Button
+                onClick={() => {
+                  doSearch(searchTerm, allProducts);
+                }}
+                icon={SearchMajor}
+              >Search</Button> */}
+            </FormLayout>
+          </Form>
+
         </Modal.Section>
         <Modal.Section>
           {selectedItems && enableMoveToPositionForm && (

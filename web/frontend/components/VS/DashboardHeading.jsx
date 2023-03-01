@@ -53,14 +53,14 @@ export const DashboardHeading = ({
       endpoint: "/admin/api/2022-10/smart_collections.json",
     });
 
-    const selectCollections = [{ label: "Select a collection", value: "" }];
+    let selectCollections = [{ label: "Select a collection", value: "" }];
 
-    data.custom_collections.map((c) => {
-      selectCollections.push({ label: c.title, value: c.id });
+    data.custom_collections.forEach((c) => {
+      selectCollections = [...selectCollections, { label: c.title, value: `${c.id}` }]
     });
 
-    dataSmart.smart_collections.map((c) => {
-      selectCollections.push({ label: c.title, value: c.id });
+    dataSmart.smart_collections.forEach((c) => {
+      selectCollections = [...selectCollections, {label: c.title, value: `${c.id}` }];
     });
 
     console.log("smart-collections: ", selectCollections);
@@ -156,8 +156,8 @@ export const DashboardHeading = ({
               label="Collection"
               options={collections}
               onChange={setSelectedCollection}
-              value={selectedCollection}
-            ></Select>
+              value={`${selectedCollection}`}
+            />
           </Grid.Cell>
           <Grid.Cell
             columnSpan={{ xs: 2, sm: 1, md: 1, lg: 3, xl: 3 }}
