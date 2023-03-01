@@ -82,14 +82,14 @@ const ProductsRender = ({
       case "price":
         switch(filterState.order){
           case "asc":
-            setProductsArray([...productsArray.sort((a,b) => a.variants[0].price.localeCompare(b.variants[0].price))])
+            setProductsArray([...productsArray.sort((a,b) => (+a.variants[0].price) - (+b.variants[0].price))])
             break
           case "desc":
-            setProductsArray([...productsArray.sort((a,b) => b.variants[0].price.localeCompare(a.variants[0].price))])
+            setProductsArray([...productsArray.sort((a,b) => (+b.variants[0].price) - (+a.variants[0].price))])
             break
         }
     }
-    console.log(productsArray)
+    console.log(productsArray.map(item => item.variants[0].price))
   },[filterState])
   useEffect(() => {
     if (displaySettings.selectedItems && displaySettings.selectedItems.length > 0) {
