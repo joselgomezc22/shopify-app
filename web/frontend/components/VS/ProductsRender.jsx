@@ -17,6 +17,7 @@ import ReorderHelper from "../../hooks/reorderHelper";
 
 import Sortable, { MultiDrag, Swap } from "sortablejs";
 import { useSelector } from "react-redux";
+import { sortBy } from "../../hooks/SortByHelper";
 
 const ProductsRender = ({
   allProducts,
@@ -51,7 +52,7 @@ const ProductsRender = ({
   const [toChangeItems, setToChangeItems] = useState([]); // array of changed items
 
   //redux state
-  const filterState = useSelector(state => state.filter) 
+  const filterState = useSelector(state => state.filter)
 
   const [valueNumber, setValueNumber] = useState(0);
   const reorderHelper = new ReorderHelper();
@@ -74,27 +75,22 @@ const ProductsRender = ({
       event.preventDefault();
       event.stopPropagation();
     }
-  }, []); 
-  
+  }, []);
+
   useEffect(_ => {
-    console.log(filterState)
-    switch(filterState.filter){
-      case "price":
-        switch(filterState.order){
-          case "asc":
-            setProductsArray([...productsArray.sort((a,b) => (+a.variants[0].price) - (+b.variants[0].price))])
-            break
-          case "desc":
-            setProductsArray([...productsArray.sort((a,b) => (+b.variants[0].price) - (+a.variants[0].price))])
-            break
-        }
-    }
-    console.log(productsArray.map(item => item.variants[0].price))
-  },[filterState])
+    sortBy(filterState.filter, productsArray, setProductsArray)
+    // probe if sort is correct
+    console.log(productsArray.map(item => item.variants[0].created_at
+    ))
+    // probe quantity sort with reduce
+    /* console.log(productsArray.map(item => item.variants.reduce((total, variant) => total + variant.inventory_quantity
+      , 0))) */
+  }, [filterState])
   useEffect(() => {
+    console.log(productsArray)
     if (displaySettings.selectedItems && displaySettings.selectedItems.length > 0) {
-      let reOrdered = reorderHelper.init(displaySettings,productsArray,{productPerPage,currentPage});
-      if(reOrdered.length > 0) {
+      let reOrdered = reorderHelper.init(displaySettings, productsArray, { productPerPage, currentPage });
+      if (reOrdered.length > 0) {
         setProductsArray(reOrdered);
       }
     }
@@ -105,7 +101,7 @@ const ProductsRender = ({
       setSelectedItemsBackup(selectedItems);
     }
   }, [openBulkModal]);
- 
+
   useEffect(() => {
     let productsArrayMap = allProducts.map((product) => {
       let images = product.images.map((image) => {
@@ -125,7 +121,7 @@ const ProductsRender = ({
 
     setProductsArray(productsArrayMap);
     setProductsBackup(JSON.stringify(productsArrayMap));
-  }, [allProducts]); 
+  }, [allProducts]);
 
   useEffect(() => {
     const indexOfLastProduct = currentPage * productPerPage;
@@ -369,7 +365,7 @@ const ProductsRender = ({
   return (
     <>
       <>
-    
+
         <input
           readOnly
           ref={auxInputCurrentPage}
@@ -484,6 +480,10 @@ const ProductsRender = ({
       <Modal
         open={activeModal}
         title="Bulk Actions"
+        onClose={_ => {
+          setActiveModal(false);
+          setOpenBulkModal(false);
+        }}
         primaryAction={{
           content: "Done",
           onAction: () => {

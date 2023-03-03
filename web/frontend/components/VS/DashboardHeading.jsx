@@ -167,8 +167,8 @@ export const DashboardHeading = ({
             columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}
             
           >
-            {products.length > 0 && <>
-              <SortByTool
+            {products.length <= 2000 && <>
+              <SortByTool productsQuantity={products.length}
                  />
               </>}
           </Grid.Cell>

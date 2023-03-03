@@ -22,14 +22,10 @@ import { DashboardHeading } from "../components/VS/DashboardHeading";
 
 import { useAppQuery, useAuthenticatedFetch } from "../hooks";
 import { ProductsGrid } from "../components/VS/ProductsGrid";
+import { useDispatch } from "react-redux";
+import { setFilter } from "../redux/slices/filterSlice";
 
 export default function HomePage() {
-  const [primaryAction, setPrimaryAction] = useState({
-    content: "Bulk Actions",
-    onAction: () => {
-      setOpenBulkModal(true);
-    },
-  });
 
   const secondaryActions = [];
 
@@ -40,8 +36,17 @@ export default function HomePage() {
   const [productPerPage, setPerPage] = useState("16");
   const [openBulkModal, setOpenBulkModal] = useState(false);
 
-  const [products, setProducts] = useState([]);
+  //global state
+  const dispatch = useDispatch()
 
+  const [products, setProducts] = useState([]);
+  const PriActDefValue = {
+    content: "Bulk Actions",
+    onAction: () => {
+      setOpenBulkModal(true);
+    },
+  }
+  const [primaryAction, setPrimaryAction] = useState(null);
 
   const fetch = useAuthenticatedFetch();
 
@@ -60,7 +65,17 @@ export default function HomePage() {
     published: false,
     locations: []
   });
+  useEffect(_ => {
+    dispatch(setFilter(""))
+  }, [selectedCollection])
 
+  useEffect(_  => {
+    if(products.length > 2000){
+      setPrimaryAction(PriActDefValue)
+    }else{
+      setPrimaryAction(null)
+    }
+  },[products])
   const api = async (body) => {
     /**
      * @Request will always be POST TYPE
@@ -103,7 +118,7 @@ export default function HomePage() {
 
   return (
     <Page fullWidth>
-      
+
       <TitleBar
         title="Visual Merchandiser 2.0"
         secondaryActions={secondaryActions}
