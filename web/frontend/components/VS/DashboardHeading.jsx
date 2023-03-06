@@ -167,7 +167,7 @@ export const DashboardHeading = ({
             columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}
             
           >
-            {products.length <= 2000 && <>
+            {(products.length <= 2000 && products.length > 0) && <>
               <SortByTool productsQuantity={products.length}
                  />
               </>}

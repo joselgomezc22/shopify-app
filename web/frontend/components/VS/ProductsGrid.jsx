@@ -6,6 +6,8 @@ import SearchResults from "./SearchResults";
 import { ProductsContainer } from "./ProductsContainer";
 
 import ProductsRender from "./ProductsRender";
+import { useDispatch, useSelector } from "react-redux";
+import { setNextProducts } from "../../redux/slices/productsSlice";
 
 export const ProductsGrid = ({
   selectedCollection,
@@ -36,7 +38,11 @@ export const ProductsGrid = ({
   const [reOrderHandler, setReOrderHandler] = useState([]);
 
   // if a collection has mot than 250, this object will handle the next products to have them ready in case to need them
-  const [nextProducts, setNextProducts] = useState({});
+ // const [nextProducts, setNextProducts] = useState({});
+
+  //global state
+  const productsNextGroup = useSelector(state => state.products.nextGroup)
+  const dispatch = useDispatch()
 
   useEffect(async () => {
     if (selectedCollection) {
@@ -48,9 +54,7 @@ export const ProductsGrid = ({
         endpoint: `/admin/api/2022-10/collections/${selectedCollection}/products.json?limit=${limit}`,
       });
       const { data, link } = await request.json();
-
       paginationHandler(link);
-
       const arrayProductsIds = data.products.map((prod) => prod.id).join(",");
 
       const request_variants = await apiWithPagination({
@@ -91,10 +95,15 @@ export const ProductsGrid = ({
       setProducts([]);
       setIsLoading(false);
     }
-
     setIsLoading(false);
   }, [selectedCollection]);
 
+  useEffect(_ => {
+    if(nextPageToken){
+      console.log("pagination")
+      requestPaginate(nextPageToken)
+    }
+  },[nextPageToken])
   useEffect(async () => {}, [products]);
   useEffect(async () => {
     if (displaySettings.enableLocations && inventoryLevels.length == 0) {
@@ -180,8 +189,33 @@ export const ProductsGrid = ({
       endpoint: `/admin/api/2022-10/collections/${selectedCollection}/products.json?limit=${limit}&page_info=${pageToken}`,
     });
     const { data, link } = await request.json();
+    const arrayProductsIds = data.products.map((prod) => prod.id).join(",");
+    const request_variants = await apiWithPagination({
+      method: "GET",
+      endpoint: `/admin/api/2022-10/products.json?fields=variants,id&ids=${arrayProductsIds}&limit=250`,
+    });
+    const { data: data_variants } = await request_variants.json();
+
+    const productsNew = data.products.map((product, index) => {
+      const correspondingVariant = data_variants.products.find(
+        (variant) => variant.id === product.id
+      );
+
+      return {
+        id: product.id,
+        images: product.images,
+        title: product.title,
+        product_type: product.product_type,
+        vendor: product.vendor,
+        published_at: product.published_at,
+        tags: product.tags,
+        variants: correspondingVariant?.variants,
+      };
+    });
+    //console.log("newArray",productsNew)
     paginationHandler(link);
-    setProducts(data.products);
+   /*  setProducts(data.products); */
+    dispatch(setNextProducts([...productsNextGroup, ...productsNew]))
     setIsLoading(false);
   };
   /**
