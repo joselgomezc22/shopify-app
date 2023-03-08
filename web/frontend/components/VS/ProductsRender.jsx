@@ -81,6 +81,7 @@ const ProductsRender = ({
   }, []);
 
   useEffect(_ => {
+    setProductsArray([...productsArray, ...productsState.nextGroup])
     sortBy(filterState.filter, productsArray, setProductsArray)
     // probe if sort is correct
     console.log(productsArray.map(item => item.variants[0].created_at
