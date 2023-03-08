@@ -16,6 +16,7 @@ import {
 import { AccessibilityMajor } from "@shopify/polaris-icons";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSelector } from "react-redux";
 import SearchResults from "./searchResults";
 import { SortByTool } from "./SortByTool";
 
@@ -36,6 +37,8 @@ export const DashboardHeading = ({
   products,
 }) => {
   const [locations, setLocations] = useState(null);
+  //global state
+  const productsState = useSelector(state => state.products)
 
   useEffect(async () => {
     const { locations } = await api({
@@ -161,13 +164,12 @@ export const DashboardHeading = ({
           </Grid.Cell>
           <Grid.Cell
             columnSpan={{ xs: 2, sm: 1, md: 1, lg: 3, xl: 3 }}
-            
           ></Grid.Cell>
           <Grid.Cell
             columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}
             
           >
-            {(products.length <= 2000 && products.length > 0) && <>
+            {((productsState.collectInfo.totalProducts <= 2000 && productsState.collectInfo.totalProducts > 0) && productsState.loadedAllProducts) && <>
               <SortByTool productsQuantity={products.length}
                  />
               </>}

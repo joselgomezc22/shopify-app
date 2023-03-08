@@ -20,6 +20,8 @@ import { useSelector } from "react-redux";
 import { sortBy } from "../../hooks/SortByHelper";
 
 const ProductsRender = ({
+  api,
+  selectedCollection,
   allProducts,
   productWithVariants,
   productBackup,
@@ -53,6 +55,7 @@ const ProductsRender = ({
 
   //redux state
   const filterState = useSelector(state => state.filter)
+  const productsState = useSelector(state => state.products)
 
   const [valueNumber, setValueNumber] = useState(0);
   const reorderHelper = new ReorderHelper();
@@ -253,7 +256,7 @@ const ProductsRender = ({
   }, [productsArray, productsBackup, allProducts, selectedItems]);
 
   const saveOrderingChanges = async () => {
-    setToChangeItems([]);
+    /* setToChangeItems([]);
     setEnableFixedBar(false);
     const body = { toChange: toChangeItems };
     const requestOptions = {
@@ -264,7 +267,32 @@ const ProductsRender = ({
     const response = await fetch(
       "/api/shopify/products/reorder",
       requestOptions
-    );
+    ); */
+    switch(productsState.collectInfo.type){
+      case "smart":
+        console.log("smart")
+        break
+      case "custom":
+      const responseOrder = await api({
+        method: "PUT",
+        endpoint: `/admin/api/2023-01/custom_collections/${selectedCollection}.json`,
+        data: {
+          custom_collection:{
+            id: selectedCollection,
+            collects: [
+              {
+                product_id: 7392837468312,
+                position: 1
+              },
+              {
+                product_id: 7392838746264,
+                position: 2
+              }
+            ]
+          }
+        }
+      });
+    }
   };
 
   const handleUnselect = (e) => {

@@ -22,7 +22,7 @@ import { DashboardHeading } from "../components/VS/DashboardHeading";
 
 import { useAppQuery, useAuthenticatedFetch } from "../hooks";
 import { ProductsGrid } from "../components/VS/ProductsGrid";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setFilter } from "../redux/slices/filterSlice";
 
 export default function HomePage() {
@@ -38,6 +38,7 @@ export default function HomePage() {
 
   //global state
   const dispatch = useDispatch()
+  const productsState = useSelector(state => state.products)
 
   const [products, setProducts] = useState([]);
   const PriActDefValue = {
@@ -70,7 +71,7 @@ export default function HomePage() {
   }, [selectedCollection])
 
   useEffect(_  => {
-    if(products.length > 2000){
+    if((productsState.collectInfo.totalProducts > 2000 && productsState.loadedAllProducts)){
       setPrimaryAction(PriActDefValue)
     }else{
       setPrimaryAction(null)

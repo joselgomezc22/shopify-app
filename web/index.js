@@ -181,6 +181,51 @@ export async function createServer(
   // attribute, as a result of the express.json() middleware
   app.use(express.json());
 
+
+ /* 
+  Reorder API
+ 
+ */
+  // app.post("/api/reorder", async (req, res) => {
+  //   const session = await Shopify.Utils.loadCurrentSession(
+  //     req,
+  //     res,
+  //     app.get("use-online-tokens")
+  //   );
+
+  //   const {id,products, type} = req.body
+    
+  //   const client = new Shopify.Clients.Rest(`https://${session.shop}`, session.accessToken)
+  //   await client.put({
+  //     path: `/admin/api/2023-01/custom_collections/${id}.json`,
+  //     data: JSON.stringify(products)
+  //   })
+  //   /* const response = await fetch(`https://${session.shop}/admin/api/2023-01/custom_collections/${id}.json`,
+  //   {
+  //     method: "PUT",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       "X-Shopify-Access-Token": session["accessToken"],
+  //     },
+  //     body: JSON.stringify({
+  //       custom_collection:{
+  //         id,
+  //         collects: [
+  //           {
+  //             product_id: 7392837468312,
+  //             position: 1
+  //           }
+  //         ]
+  //       }
+  //     }),
+  //   }) */
+  //   /* return res.status(200).json({
+  //     msg: "ok"
+  //   }) */
+
+  // })
+
+
   /**
    * * SHOPIFY CURL PROXY
    * @method {string}
@@ -199,7 +244,7 @@ export async function createServer(
     const endpoint = body.endpoint;
     const method = body.method;
 
-    const requestOptions = {
+    let requestOptions = {
       method: method,
       headers: {
         "Content-Type": "application/json",
@@ -207,6 +252,7 @@ export async function createServer(
       },
       body: method == "GET" ? null : JSON.stringify(data),
     };
+    console.log("first", JSON.stringify(data))
 
     const response = await fetch(
       `https://${session.shop}${endpoint}`,
@@ -217,7 +263,7 @@ export async function createServer(
       const data = await response.json();
       res.status(response.status).send(data);
     } else {
-      console.log(response);
+      console.log("fail",response);
       res.status(response.status).send(data);
     }
   });

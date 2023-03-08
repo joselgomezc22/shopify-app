@@ -1,5 +1,5 @@
 import { Frame, Loading, Pagination, Grid, Layout } from "@shopify/polaris";
-import { useEffect, useState, useCallback , useContext } from "react";
+import { useEffect, useState, useCallback, useContext } from "react";
 import { ProductCard } from "./ProductCard";
 import SearchResults from "./SearchResults";
 
@@ -7,7 +7,7 @@ import { ProductsContainer } from "./ProductsContainer";
 
 import ProductsRender from "./ProductsRender";
 import { useDispatch, useSelector } from "react-redux";
-import { setNextProducts } from "../../redux/slices/productsSlice";
+import { setArrayProducts, setcollectInfo, setNextProducts } from "../../redux/slices/productsSlice";
 
 export const ProductsGrid = ({
   selectedCollection,
@@ -38,17 +38,30 @@ export const ProductsGrid = ({
   const [reOrderHandler, setReOrderHandler] = useState([]);
 
   // if a collection has mot than 250, this object will handle the next products to have them ready in case to need them
- // const [nextProducts, setNextProducts] = useState({});
+  // const [nextProducts, setNextProducts] = useState({});
 
   //global state
-  const productsNextGroup = useSelector(state => state.products.nextGroup)
+  const productsState = useSelector(state => state.products)
   const dispatch = useDispatch()
 
   useEffect(async () => {
+    dispatch(setArrayProducts([]))
+    dispatch(setNextProducts([]))
     if (selectedCollection) {
       setNextPageToken("");
       setPrevPageToken("");
       setIsLoading(true);
+      const collectionInfo = await api({
+        method: "GET",
+        endpoint: `/admin/api/2023-01/collections/${selectedCollection}.json?fields=collection_type`,
+      });
+      console.log("collect info", collectionInfo.collection)
+      const { collection: { collection_type, products_count } } = collectionInfo
+      dispatch(setcollectInfo({
+        type: collection_type,
+        totalProducts: products_count
+      }))
+
       const request = await apiWithPagination({
         method: "GET",
         endpoint: `/admin/api/2022-10/collections/${selectedCollection}/products.json?limit=${limit}`,
@@ -84,6 +97,7 @@ export const ProductsGrid = ({
         setInventoryItemsRequest(productsNew);
       }
       setProducts(productsNew);
+      dispatch(setArrayProducts(productsNew))
       setProductsExternal(productsNew);
       setProductsBackup(productsNew);
       setWithVariants(data_variants.products);
@@ -92,6 +106,7 @@ export const ProductsGrid = ({
       setIsLoading(true);
       setNextPageToken("");
       setPrevPageToken("");
+      dispatch(setArrayProducts([]))
       setProducts([]);
       setIsLoading(false);
     }
@@ -99,12 +114,17 @@ export const ProductsGrid = ({
   }, [selectedCollection]);
 
   useEffect(_ => {
-    if(nextPageToken){
+    if (nextPageToken) {
       console.log("pagination")
       requestPaginate(nextPageToken)
+    }else{
+      //console.log(productsState.arrayProducts.length,productsState.collectInfo.totalProducts)
     }
-  },[nextPageToken])
-  useEffect(async () => {}, [products]);
+  }, [nextPageToken])
+  /* useEffect(async () => { 
+    console.log("cambio todo")
+  }, [productsState.arrayProducts]); */
+
   useEffect(async () => {
     if (displaySettings.enableLocations && inventoryLevels.length == 0) {
       setInventoryItemsRequest(products);
@@ -213,9 +233,9 @@ export const ProductsGrid = ({
       };
     });
     //console.log("newArray",productsNew)
+    dispatch(setNextProducts([...productsState.nextGroup, ...productsNew]))
     paginationHandler(link);
-   /*  setProducts(data.products); */
-    dispatch(setNextProducts([...productsNextGroup, ...productsNew]))
+    /*  setProducts(data.products); */
     setIsLoading(false);
   };
   /**
@@ -324,7 +344,7 @@ export const ProductsGrid = ({
     return decodeURIComponent(results[2].replace(/\+/g, " "));
   };
 
-  const onEndHandler = (e) => {};
+  const onEndHandler = (e) => { };
 
   return (
     <>
@@ -334,11 +354,13 @@ export const ProductsGrid = ({
         </Frame>
       )}
 
-     
+
 
       {!isLoading && (
         <>
           <ProductsRender
+            api={api}
+            selectedCollection={selectedCollection}
             columns={columns}
             openBulkModal={openBulkModal}
             setOpenBulkModal={setOpenBulkModal}
