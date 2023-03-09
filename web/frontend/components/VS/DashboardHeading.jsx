@@ -11,6 +11,7 @@ import {
   Checkbox,
   Tabs,
   ButtonGroup,
+  Spinner,
 } from "@shopify/polaris";
 
 import { AccessibilityMajor } from "@shopify/polaris-icons";
@@ -172,61 +173,17 @@ export const DashboardHeading = ({
             />
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 3, xl: 3 }}>
-            <Button
-              onClick={async (_) => {
-                // const responseOrder = await api({
-                //   method: "PUT",
-                //   endpoint: `/admin/api/2023-01/custom_collections/`,
-                //   test: true,
-                //   id: selectedCollection,
-                //   data: {
-                //     custom_collection:{
-                //      /*  id: selectedCollection, */
-                //       collects: [
-                //         {
-                //           id: 33197023133848,
-                //           position: 1
-                //         }/* ,
-                //         {
-                //           product_id: 7392838746264,
-                //           position: 2
-                //         } */
-                //       ]
-                //     }
-                //   }
-                // });
-                const requestOptions = {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                };
-                try {
-                  console.log("click");
-                  const response = await fetch(
-                    "/api/shopify/products/reorder",
-                    requestOptions
-                  );
-                } catch (error) {
-                  console.log(error);
-                }
-
-                /* const ress = await api({
-              method: "POST",
-              endpoint: "/api/shopify/products/reorder",
-              data: {toChangue: []}
-            }) */
-              }}
-            >
-              sdfsd
-            </Button>
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>
             {productsState.collectInfo.totalProducts <= 2000 &&
               productsState.collectInfo.totalProducts > 0 &&
-              productsState.loadedAllProducts && (
+              (productsState.loadedAllProducts ? (
                 <>
                   <SortByTool productsQuantity={products.length} />
                 </>
-              )}
+              )
+              :
+              <Button><Spinner accessibilityLabel="Loading Products" size="small"/></Button>)}
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>
             {products.length > 0 && (

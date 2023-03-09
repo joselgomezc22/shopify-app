@@ -64,12 +64,13 @@ export const ProductsGrid = ({
         totalProducts: products_count
       }))
 
-      const request2 = await api({
+      /* const request2 = await api({
         method: "GET",
         endpoint: `/admin/api/2022-04/collects.json?collection_id=${selectedCollection}&limit=250`,
       });
+
       console.log(request2)
-      const {collects} = request2
+      const {collects} = request2 */
 
       const request = await apiWithPagination({
         method: "GET",
@@ -93,7 +94,7 @@ export const ProductsGrid = ({
 
         return {
           id: product.id,
-          collect_id: collects[index].id,
+          /* collect_id: collects[index].id, */
           images: product.images,
           title: product.title,
           product_type: product.product_type,

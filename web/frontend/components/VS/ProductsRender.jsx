@@ -9,6 +9,8 @@ import {
   TextContainer,
   Modal,
   TextField,
+  Toast,
+  Frame
 } from "@shopify/polaris";
 import { ProductCard } from "./ProductCard";
 import { ContextData } from "../../Routes";
@@ -18,6 +20,7 @@ import ReorderHelper from "../../hooks/reorderHelper";
 import Sortable, { MultiDrag, Swap } from "sortablejs";
 import { useSelector } from "react-redux";
 import { sortBy } from "../../hooks/SortByHelper";
+import { chunks } from "../../utils/tools";
 
 const ProductsRender = ({
   api,
@@ -56,6 +59,12 @@ const ProductsRender = ({
   //redux state
   const filterState = useSelector(state => state.filter)
   const productsState = useSelector(state => state.products)
+  //toast 
+  const [activeToast, setActiveToast] = useState(false);
+  const toggleActiveToast = useCallback(() => setActiveToast((activeToast) => !activeToast), []);
+  const [activeToastOrder, setActiveToastOrder] = useState(false);
+  const toggleActiveToastOrder = useCallback(() => setActiveToastOrder((activeToastOrder) => !activeToastOrder), []);
+
 
   const [valueNumber, setValueNumber] = useState(0);
   const reorderHelper = new ReorderHelper();
@@ -81,15 +90,25 @@ const ProductsRender = ({
   }, []);
 
   useEffect(_ => {
-    setProductsArray([...productsArray, ...productsState.nextGroup])
+    /*  setProductsArray([...productsArray, ...productsState.nextGroup]) */
     sortBy(filterState.filter, productsArray, setProductsArray)
     // probe if sort is correct
     console.log(productsArray.map(item => item.variants[0].created_at
     ))
+    if (filterState.filter) {
+      setEnableFixedBar(true)
+    }
     // probe quantity sort with reduce
     /* console.log(productsArray.map(item => item.variants.reduce((total, variant) => total + variant.inventory_quantity
       , 0))) */
   }, [filterState])
+  useEffect(_ => {
+    if (productsState.loadedAllProducts) {
+      console.log("loaded all products")
+      toggleActiveToast()
+      setProductsArray([...productsArray, ...productsState.nextGroup])
+    }
+  }, [productsState.loadedAllProducts])
   useEffect(() => {
     console.log(productsArray)
     if (displaySettings.selectedItems && displaySettings.selectedItems.length > 0) {
@@ -269,7 +288,59 @@ const ProductsRender = ({
       "/api/shopify/products/reorder",
       requestOptions
     ); */
-    switch(productsState.collectInfo.type){
+    setEnableFixedBar(false)
+    const toChange = productsArray.map(({ id }, index) => {
+      return {
+        id,
+        position: index
+      }
+    })
+    if (toChange.length > 250) {
+      const iterations = Math.ceil(toChange.length / 250)
+      const toChangeChunks = [...chunks(toChange, 250)]
+      let promises = []
+      for (let i = 0; i < iterations; i++) {
+        promises = [...promises, fetch("/api/shopify/products/reorder",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              collection_id: selectedCollection,
+              toChange: toChangeChunks[i]
+            })
+          })];
+        console.log("chunk", toChangeChunks[i])
+      }
+      Promise.all(promises)
+        .then(res => {
+          console.log("good", res)
+          toggleActiveToastOrder()
+        }).catch(err => {
+          console.log(error)
+        })
+      /*    console.log([...chunks(productsArray,250)]) */
+      //console.log("pro",promises)
+    } else {
+      try {
+        const response = await fetch(
+          "/api/shopify/products/reorder",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              collection_id: selectedCollection,
+              toChange
+            })
+          }
+        );
+        console.log("order", response)
+        toggleActiveToastOrder()
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    
+    /* switch(productsState.collectInfo.type){
       case "smart":
         console.log("smart")
         break
@@ -293,7 +364,7 @@ const ProductsRender = ({
           }
         }
       });
-    }
+    } */
   };
 
   const handleUnselect = (e) => {
@@ -553,6 +624,9 @@ const ProductsRender = ({
           </p>
         </Modal.Section>
       </Modal>
+      <Frame>{activeToast && <Toast content="All products loaded" duration={3000} onDismiss={toggleActiveToast} />}
+        {activeToastOrder && <Toast content="Changues saved" duration={3000} onDismiss={toggleActiveToast} />}</Frame>
+
     </>
   );
 };

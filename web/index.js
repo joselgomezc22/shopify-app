@@ -252,26 +252,6 @@ export async function createServer(
       body: method == "GET" ? null : JSON.stringify(data),
     };
 
-    if (req.body.test) {
-      console.log("yes")
-      const { id, type } = req.body
-try {
-  const client = new Shopify.Clients.Rest(session.shop, session.accessToken)
-  await client.put({
-    type: DataType.JSON,
-    path: `/admin/api/2023-01/custom_collections/${id}.json`,
-    data
-  })
-     /*  const res2 = await client.put({
-        path: `/admin/api/2023-01/custom_collections/${id}.json`,
-        data: JSON.stringify(data)
-      }) */
-      /* console.log("res",res2) */
-} catch (error) {
-  console.log("error",error)
-}
-      
-    }else{
     const response = await fetch(
       `https://${session.shop}${endpoint}`,
       requestOptions
@@ -284,7 +264,6 @@ try {
       console.log("fail", response);
       res.status(response.status).send(data);
     }
-  }
   });
   app.post("/api/shopify/proxy/with-pagination", async (req, res) => {
     const session = await Shopify.Utils.loadCurrentSession(
@@ -324,72 +303,51 @@ try {
       res.status(response.status).send(data);
     }
   });
+
+
   app.post("/api/shopify/products/reorder", async (req, res) => {
-    console.log("asfdsfadsfadsfdsfdsfasd")
-    // const { toChange } = req.body;
-    // console.log("ss",toChange);
-    // const session = await Shopify.Utils.loadCurrentSession(
-    //   req,
-    //   res,
-    //   false/* app.get("use-online-tokens") */
-    // );
+    const {collection_id, toChange } = req.body;
+    const session = await Shopify.Utils.loadCurrentSession(
+      req,
+      res,
+      app.get("use-online-tokens")
+    );
 
-    // const client = new Shopify.Clients.Graphql(
-    //   session.shop,
-    //   session.accessToken
-    // );
+    const client = new Shopify.Clients.Graphql(
+      session.shop,
+      session.accessToken
+    );
 
-    // let id = "7392838746264";
-    // let position = "0";
-    // let collection = "284857139352";
+    const REORDER_MUTATION = `
+      mutation collectionReorderProducts($id: ID!, $moves: [MoveInput!]!) {
+        collectionReorderProducts(id: $id, moves: $moves) {
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
 
-    // const REORDER_MUTATION = `
-    //   mutation collectionReorderProducts($id: ID!, $moves: [MoveInput!]!) {
-    //     collectionReorderProducts(id: $id, moves: $moves) {
-    //       userErrors {
-    //         field
-    //         message
-    //       }
-    //     }
-    //   }
-    // `;
-
-    // /* let moves = toChange.map((item) => {
-    //   return {
-    //     id: `gid://shopify/Product/${item.id}`,
-    //     newPosition: String(item.position),
-    //   };
-    // }); */
-
-    // let move = [
-    //   {
-    //     id: "gid://shopify/Product/7392838746264",
-    //     newPosition: "1",
-    //   }/* ,
-    //   {
-    //     id: "gid://shopify/Product/7392839073944",
-    //     newPosition: "1",
-    //   } */
-    // ];
-
-    // console.log('move');
-    // console.log(move);
-    // console.log('----');
-    // /* console.log('moves');
-    // console.log(moves); */
+    let moves = toChange.map((item) => {
+      return {
+        id: `gid://shopify/Product/${item.id}`,
+        newPosition: String(item.position),
+      };
+    });
 
 
-    // const dataMutation = await client.query({
-    //   data: {
-    //     query: REORDER_MUTATION,
-    //     variables: {
-    //       id: "gid://shopify/Collection/284408414360",
-    //       moves: move,
-    //     },
-    //   },
-    // });
+    const dataMutation = await client.query({
+      data: {
+        query: REORDER_MUTATION,
+        variables: {
+          id: `gid://shopify/Collection/${collection_id}`,
+          moves
+        },
+      },
+    });
 
-    // console.log(dataMutation?.body?.data);
+    console.log(dataMutation?.body?.data.collectionReorderProducts.userErrors);
 
     /*const queryString = `{
       products (first: 3) {
