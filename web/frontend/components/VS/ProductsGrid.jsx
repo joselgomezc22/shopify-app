@@ -55,18 +55,28 @@ export const ProductsGrid = ({
         method: "GET",
         endpoint: `/admin/api/2023-01/collections/${selectedCollection}.json?fields=collection_type`,
       });
+
       console.log("collect info", collectionInfo.collection)
+
       const { collection: { collection_type, products_count } } = collectionInfo
       dispatch(setcollectInfo({
         type: collection_type,
         totalProducts: products_count
       }))
 
+      const request2 = await api({
+        method: "GET",
+        endpoint: `/admin/api/2022-04/collects.json?collection_id=${selectedCollection}&limit=250`,
+      });
+      console.log(request2)
+      const {collects} = request2
+
       const request = await apiWithPagination({
         method: "GET",
         endpoint: `/admin/api/2022-10/collections/${selectedCollection}/products.json?limit=${limit}`,
       });
       const { data, link } = await request.json();
+      console.log("first",data)
       paginationHandler(link);
       const arrayProductsIds = data.products.map((prod) => prod.id).join(",");
 
@@ -83,6 +93,7 @@ export const ProductsGrid = ({
 
         return {
           id: product.id,
+          collect_id: collects[index].id,
           images: product.images,
           title: product.title,
           product_type: product.product_type,

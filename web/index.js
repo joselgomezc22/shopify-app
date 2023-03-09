@@ -3,7 +3,7 @@ import { join } from "path";
 import { readFileSync } from "fs";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { Shopify, LATEST_API_VERSION } from "@shopify/shopify-api";
+import { Shopify, LATEST_API_VERSION, DataType } from "@shopify/shopify-api";
 
 import applyAuthMiddleware from "./middleware/auth.js";
 import verifyRequest from "./middleware/verify-request.js";
@@ -182,10 +182,10 @@ export async function createServer(
   app.use(express.json());
 
 
- /* 
-  Reorder API
- 
- */
+  /* 
+   Reorder API
+  
+  */
   // app.post("/api/reorder", async (req, res) => {
   //   const session = await Shopify.Utils.loadCurrentSession(
   //     req,
@@ -194,7 +194,7 @@ export async function createServer(
   //   );
 
   //   const {id,products, type} = req.body
-    
+
   //   const client = new Shopify.Clients.Rest(`https://${session.shop}`, session.accessToken)
   //   await client.put({
   //     path: `/admin/api/2023-01/custom_collections/${id}.json`,
@@ -238,13 +238,12 @@ export async function createServer(
       res,
       app.get("use-online-tokens")
     );
-
     const body = req.body;
     const data = body.data;
     const endpoint = body.endpoint;
     const method = body.method;
 
-    let requestOptions = {
+    const requestOptions = {
       method: method,
       headers: {
         "Content-Type": "application/json",
@@ -252,8 +251,27 @@ export async function createServer(
       },
       body: method == "GET" ? null : JSON.stringify(data),
     };
-    console.log("first", JSON.stringify(data))
 
+    if (req.body.test) {
+      console.log("yes")
+      const { id, type } = req.body
+try {
+  const client = new Shopify.Clients.Rest(session.shop, session.accessToken)
+  await client.put({
+    type: DataType.JSON,
+    path: `/admin/api/2023-01/custom_collections/${id}.json`,
+    data
+  })
+     /*  const res2 = await client.put({
+        path: `/admin/api/2023-01/custom_collections/${id}.json`,
+        data: JSON.stringify(data)
+      }) */
+      /* console.log("res",res2) */
+} catch (error) {
+  console.log("error",error)
+}
+      
+    }else{
     const response = await fetch(
       `https://${session.shop}${endpoint}`,
       requestOptions
@@ -263,9 +281,10 @@ export async function createServer(
       const data = await response.json();
       res.status(response.status).send(data);
     } else {
-      console.log("fail",response);
+      console.log("fail", response);
       res.status(response.status).send(data);
     }
+  }
   });
   app.post("/api/shopify/proxy/with-pagination", async (req, res) => {
     const session = await Shopify.Utils.loadCurrentSession(
@@ -306,70 +325,71 @@ export async function createServer(
     }
   });
   app.post("/api/shopify/products/reorder", async (req, res) => {
-    const { toChange } = req.body;
-    console.log(toChange);
-    const session = await Shopify.Utils.loadCurrentSession(
-      req,
-      res,
-      app.get("use-online-tokens")
-    );
+    console.log("asfdsfadsfadsfdsfdsfasd")
+    // const { toChange } = req.body;
+    // console.log("ss",toChange);
+    // const session = await Shopify.Utils.loadCurrentSession(
+    //   req,
+    //   res,
+    //   false/* app.get("use-online-tokens") */
+    // );
 
-    const client = new Shopify.Clients.Graphql(
-      session.shop,
-      session.accessToken
-    );
+    // const client = new Shopify.Clients.Graphql(
+    //   session.shop,
+    //   session.accessToken
+    // );
 
-    let id = "7392838746264";
-    let position = "0";
-    let collection = "284857139352";
+    // let id = "7392838746264";
+    // let position = "0";
+    // let collection = "284857139352";
 
-    const REORDER_MUTATION = `
-      mutation collectionReorderProducts($id: ID!, $moves: [MoveInput!]!) {
-        collectionReorderProducts(id: $id, moves: $moves) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    `;
+    // const REORDER_MUTATION = `
+    //   mutation collectionReorderProducts($id: ID!, $moves: [MoveInput!]!) {
+    //     collectionReorderProducts(id: $id, moves: $moves) {
+    //       userErrors {
+    //         field
+    //         message
+    //       }
+    //     }
+    //   }
+    // `;
 
-    let moves = toChange.map((item) => {
-      return {
-        id: `gid://shopify/Product/${item.id}`,
-        newPosition: String(item.position),
-      };
-    });
-    
-    let move = [
-      {
-        id: "gid://shopify/Product/7392837468312",
-        newPosition: "0",
-      },
-      {
-        id: "gid://shopify/Product/7392839073944",
-        newPosition: "1",
-      }
-    ];
+    // /* let moves = toChange.map((item) => {
+    //   return {
+    //     id: `gid://shopify/Product/${item.id}`,
+    //     newPosition: String(item.position),
+    //   };
+    // }); */
 
-    console.log('move');
-    console.log(move);
-    console.log('----');
-    console.log('moves');
-    console.log(moves);
+    // let move = [
+    //   {
+    //     id: "gid://shopify/Product/7392838746264",
+    //     newPosition: "1",
+    //   }/* ,
+    //   {
+    //     id: "gid://shopify/Product/7392839073944",
+    //     newPosition: "1",
+    //   } */
+    // ];
+
+    // console.log('move');
+    // console.log(move);
+    // console.log('----');
+    // /* console.log('moves');
+    // console.log(moves); */
 
 
-    const dataMutation = await client.query({
-      data: {
-        query: REORDER_MUTATION,
-        variables: {
-          id: "gid://shopify/Collection/284857139352",
-          moves: moves,
-        },
-      },
-    });
+    // const dataMutation = await client.query({
+    //   data: {
+    //     query: REORDER_MUTATION,
+    //     variables: {
+    //       id: "gid://shopify/Collection/284408414360",
+    //       moves: move,
+    //     },
+    //   },
+    // });
 
-    console.log(dataMutation?.body?.data);
+    // console.log(dataMutation?.body?.data);
 
     /*const queryString = `{
       products (first: 3) {
