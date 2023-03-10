@@ -7,7 +7,8 @@ const initialState = {
     defaultArray: [],
     collectInfo: {
         type: "",
-        totalProducts: null
+        totalProducts: null,
+        sort_order: ""
     },
     loadedAllProducts: false
 }
@@ -36,7 +37,7 @@ const productsSlice = createSlice({
 
         },
         setSelectedColl: (state, action) => {
-
+            state.selectedCollection = action.payload
         },
         setcollectInfo: (state, action) => {
             state.collectInfo = action.payload

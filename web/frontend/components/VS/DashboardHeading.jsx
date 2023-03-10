@@ -182,7 +182,7 @@ export const DashboardHeading = ({
                   <SortByTool productsQuantity={products.length} />
                 </>
               )
-              :
+              : selectedCollection &&
               <Button><Spinner accessibilityLabel="Loading Products" size="small"/></Button>)}
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>

@@ -7,7 +7,7 @@ import { ProductsContainer } from "./ProductsContainer";
 
 import ProductsRender from "./ProductsRender";
 import { useDispatch, useSelector } from "react-redux";
-import { setArrayProducts, setcollectInfo, setNextProducts } from "../../redux/slices/productsSlice";
+import { setArrayProducts, setcollectInfo, setNextProducts, setSelectedColl } from "../../redux/slices/productsSlice";
 
 export const ProductsGrid = ({
   selectedCollection,
@@ -48,6 +48,7 @@ export const ProductsGrid = ({
     dispatch(setArrayProducts([]))
     dispatch(setNextProducts([]))
     if (selectedCollection) {
+      dispatch(setSelectedColl(selectedCollection))
       setNextPageToken("");
       setPrevPageToken("");
       setIsLoading(true);
@@ -58,10 +59,12 @@ export const ProductsGrid = ({
 
       console.log("collect info", collectionInfo.collection)
 
-      const { collection: { collection_type, products_count } } = collectionInfo
+      const { collection: { collection_type, products_count, sort_order
+      } } = collectionInfo
       dispatch(setcollectInfo({
         type: collection_type,
-        totalProducts: products_count
+        totalProducts: products_count,
+        sort_order
       }))
 
       /* const request2 = await api({

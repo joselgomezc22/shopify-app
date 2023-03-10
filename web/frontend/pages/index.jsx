@@ -129,6 +129,7 @@ export default function HomePage() {
   return (
     <Page fullWidth>
       <NotManualCollectionAdvertise
+      api={api}
         setSelectedCollection={setSelectedCollection}
       />
       <TitleBar
