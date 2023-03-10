@@ -24,9 +24,9 @@ import { useAppQuery, useAuthenticatedFetch } from "../hooks";
 import { ProductsGrid } from "../components/VS/ProductsGrid";
 import { useDispatch, useSelector } from "react-redux";
 import { setFilter } from "../redux/slices/filterSlice";
+import { NotManualCollectionAdvertise } from "../components/VS/NotManualCollectionAdvertise";
 
 export default function HomePage() {
-
   const secondaryActions = [];
 
   const [collections, setCollections] = useState([]); // array:  [...{label: collection.tittle,value:collection.id}]
@@ -37,8 +37,8 @@ export default function HomePage() {
   const [openBulkModal, setOpenBulkModal] = useState(false);
 
   //global state
-  const dispatch = useDispatch()
-  const productsState = useSelector(state => state.products)
+  const dispatch = useDispatch();
+  const productsState = useSelector((state) => state.products);
 
   const [products, setProducts] = useState([]);
   const PriActDefValue = {
@@ -46,7 +46,7 @@ export default function HomePage() {
     onAction: () => {
       setOpenBulkModal(true);
     },
-  }
+  };
   const [primaryAction, setPrimaryAction] = useState(null);
 
   const fetch = useAuthenticatedFetch();
@@ -64,19 +64,28 @@ export default function HomePage() {
     vendor: false,
     inventory: false,
     published: false,
-    locations: []
+    locations: [],
   });
-  useEffect(_ => {
-    dispatch(setFilter(""))
-  }, [selectedCollection])
+  useEffect(
+    (_) => {
+      dispatch(setFilter(""));
+    },
+    [selectedCollection]
+  );
 
-  useEffect(_  => {
-    if((productsState.collectInfo.totalProducts > 2000 && productsState.loadedAllProducts)){
-      setPrimaryAction(PriActDefValue)
-    }else{
-      setPrimaryAction(null)
-    }
-  },[products])
+  useEffect(
+    (_) => {
+      if (
+        productsState.collectInfo.totalProducts > 2000 &&
+        productsState.loadedAllProducts
+      ) {
+        setPrimaryAction(PriActDefValue);
+      } else {
+        setPrimaryAction(null);
+      }
+    },
+    [products]
+  );
   const api = async (body) => {
     /**
      * @Request will always be POST TYPE
@@ -119,7 +128,9 @@ export default function HomePage() {
 
   return (
     <Page fullWidth>
-
+      <NotManualCollectionAdvertise
+        setSelectedCollection={setSelectedCollection}
+      />
       <TitleBar
         title="Visual Merchandiser 2.0"
         secondaryActions={secondaryActions}
