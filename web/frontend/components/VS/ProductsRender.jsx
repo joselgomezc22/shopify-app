@@ -10,17 +10,29 @@ import {
   Modal,
   TextField,
   Toast,
-  Frame
+  Frame,
 } from "@shopify/polaris";
 import { ProductCard } from "./ProductCard";
 import { ContextData } from "../../Routes";
 import { useAuthenticatedFetch } from "../../hooks";
 import ReorderHelper from "../../hooks/reorderHelper";
 
-import Sortable, { MultiDrag, Swap } from "sortablejs";
 import { useSelector } from "react-redux";
 import { sortBy } from "../../hooks/SortByHelper";
 import { chunks } from "../../utils/tools";
+
+import { ReactSortable } from "react-sortablejs";
+import Sortable, { MultiDrag} from "sortablejs"
+import ModalQuickActions from "./ModalQuickActions";
+
+function mountMultiDragPlugin() {
+  if (typeof window === 'undefined') {
+    return
+  }
+  Sortable.mount(new MultiDrag())
+}
+mountMultiDragPlugin()
+
 
 const ProductsRender = ({
   api,
@@ -57,14 +69,19 @@ const ProductsRender = ({
   const [toChangeItems, setToChangeItems] = useState([]); // array of changed items
 
   //redux state
-  const filterState = useSelector(state => state.filter)
-  const productsState = useSelector(state => state.products)
-  //toast 
+  const filterState = useSelector((state) => state.filter);
+  const productsState = useSelector((state) => state.products);
+  //toast
   const [activeToast, setActiveToast] = useState(false);
-  const toggleActiveToast = useCallback(() => setActiveToast((activeToast) => !activeToast), []);
+  const toggleActiveToast = useCallback(
+    () => setActiveToast((activeToast) => !activeToast),
+    []
+  );
   const [activeToastOrder, setActiveToastOrder] = useState(false);
-  const toggleActiveToastOrder = useCallback(() => setActiveToastOrder((activeToastOrder) => !activeToastOrder), []);
-
+  const toggleActiveToastOrder = useCallback(
+    () => setActiveToastOrder((activeToastOrder) => !activeToastOrder),
+    []
+  );
 
   const [valueNumber, setValueNumber] = useState(0);
   const reorderHelper = new ReorderHelper();
@@ -80,6 +97,8 @@ const ProductsRender = ({
 
   const [activeModal, setActiveModal] = useState(false);
 
+  const [isSortable, setIsSortable] = useState(true)
+
   const fetch = useAuthenticatedFetch();
 
   const handleClick = useCallback((event) => {
@@ -89,30 +108,44 @@ const ProductsRender = ({
     }
   }, []);
 
-  useEffect(_ => {
-    /*  setProductsArray([...productsArray, ...productsState.nextGroup]) */
-    sortBy(filterState.filter, productsArray, setProductsArray)
-    // probe if sort is correct
-    console.log(productsArray.map(item => item.variants[0].created_at
-    ))
-    if (filterState.filter) {
-      setEnableFixedBar(true)
-    }
-    // probe quantity sort with reduce
-    /* console.log(productsArray.map(item => item.variants.reduce((total, variant) => total + variant.inventory_quantity
+  useEffect(
+    (_) => {
+      setIsSortable(false)
+      /*  setProductsArray([...productsArray, ...productsState.nextGroup]) */
+      sortBy(filterState.filter, productsArray, setProductsArray);
+      // probe if sort is correct
+      console.log(productsArray.map((item) => item.variants[0].created_at));
+      if (filterState.filter) {
+        setEnableFixedBar(true);
+      }
+      refTemp.current = [];
+      setIsSortable(true)
+      // probe quantity sort with reduce
+      /* console.log(productsArray.map(item => item.variants.reduce((total, variant) => total + variant.inventory_quantity
       , 0))) */
-  }, [filterState])
-  useEffect(_ => {
-    if (productsState.loadedAllProducts) {
-      console.log("loaded all products")
-      toggleActiveToast()
-      setProductsArray([...productsArray, ...productsState.nextGroup])
-    }
-  }, [productsState.loadedAllProducts])
+    },
+    [filterState]
+  );
+  useEffect(
+    (_) => {
+      if (productsState.loadedAllProducts) {
+        console.log("loaded all products");
+        toggleActiveToast();
+        setProductsArray([...productsArray, ...productsState.nextGroup]);
+      }
+    },
+    [productsState.loadedAllProducts]
+  );
   useEffect(() => {
-    console.log(productsArray)
-    if (displaySettings.selectedItems && displaySettings.selectedItems.length > 0) {
-      let reOrdered = reorderHelper.init(displaySettings, productsArray, { productPerPage, currentPage });
+    console.log(productsArray);
+    if (
+      displaySettings.selectedItems &&
+      displaySettings.selectedItems.length > 0
+    ) {
+      let reOrdered = reorderHelper.init(displaySettings, productsArray, {
+        productPerPage,
+        currentPage,
+      });
       if (reOrdered.length > 0) {
         setProductsArray(reOrdered);
       }
@@ -138,9 +171,14 @@ const ProductsRender = ({
         product_type: product.product_type,
         vendor: product.vendor,
         published_at: product.published_at,
-        variants: product.variants,
+        variants: product.variants
       };
     });
+
+    productsArrayMap = productsArrayMap.filter(product=>{
+      return  (product.published_at != null &&
+      displaySettings.published != true)|| displaySettings.published == true
+    })
 
     setProductsArray(productsArrayMap);
     setProductsBackup(JSON.stringify(productsArrayMap));
@@ -157,315 +195,112 @@ const ProductsRender = ({
     setPaginatedProducts(currentProducts);
   }, [currentPage, productsArray, productPerPage]);
 
-  useEffect(() => {
-    const handleChange = (e) => {
-      setEnableFixedBar(true);
-      const indexOfLastProduct =
-        auxInputCurrentPage.current.value *
-        auxInputProductsPerPage.current.value;
-      const indexOfFirstProduct =
-        indexOfLastProduct - auxInputProductsPerPage.current.value;
-      if (e.oldIndicies.length > 1) {
-        e.oldIndicies.forEach(
-          (element, i) => {
-            var element = e.items[i];
-
-            let id = element.id;
-            let newIndex = e.newIndicies[i].index;
-            let oldIndex = e.oldIndicies[i].index;
-
-            let objectIndex = toChangeItems.findIndex(
-              (object) => object.id === id
-            );
-
-            if (objectIndex > -1) {
-              toChangeItems[objectIndex] = {
-                id: id,
-                position: newIndex + indexOfFirstProduct,
-              };
-              setToChangeItems(toChangeItems);
-            } else {
-              toChangeItems.push({
-                id: id,
-                position: newIndex + indexOfFirstProduct,
-              });
-              setToChangeItems(toChangeItems);
-            }
-
-            let productsArrayF = productsArray;
-            let reorderArray = reorderProducts(
-              productsArrayF,
-              oldIndex + indexOfFirstProduct,
-              newIndex + indexOfFirstProduct
-            );
-            setProductsArray(reorderArray);
-            console.log(oldIndex + indexOfFirstProduct);
-          },
-          () => {
-            console.log("loop finished");
-          }
-        );
-      } else {
-        let id = e.item.id;
-        let { oldIndex, newIndex } = e;
-
-        let objectIndex = toChangeItems.findIndex((object) => object.id === id);
-        if (objectIndex > -1) {
-          toChangeItems[objectIndex] = {
-            id: id,
-            position: newIndex + indexOfFirstProduct,
-          };
-          setToChangeItems(toChangeItems);
-        } else {
-          toChangeItems.push({
-            id: id,
-            position: newIndex + indexOfFirstProduct,
-          });
-          setToChangeItems(toChangeItems);
-        }
-
-        let productsArrayF = productsArray;
-        let reorderArray = reorderProducts(
-          productsArrayF,
-          oldIndex + indexOfFirstProduct,
-          newIndex + indexOfFirstProduct
-        );
-        setProductsArray(reorderArray);
-      }
-    };
-
-    const onChooseHandler = (event) => {
-      //console.log("Choose Event");
-      let newObject = { id: event.item.id, index: event.oldIndex };
-
-      let objectIndex = selectedItems.findIndex(
-        (object) => object.id === newObject.id
-      );
-
-      if (objectIndex > -1) {
-      } else {
-        console.log("added");
-        let handleSelected = selectedItems;
-        console.log(handleSelected);
-        handleSelected.push(newObject);
-        setSelectedItems(handleSelected);
-        console.log(selectedItems);
-      }
-    };
-
-    if (gridEl) {
-      if (!mountedSort) {
-        Sortable.mount(new MultiDrag(), new Swap());
-        setMountedSort(true);
-      }
-
-      Sortable.create(gridEl.current, {
-        multiDrag: true,
-        selectedClass: "selected",
-        onEnd: (event) => {
-          console.log("on end dispatched");
-          handleChange(event);
-          //setSelectedItems([]);
-
-          //handleSortEnd(event);
-        },
-        onChoose: onChooseHandler,
-        onDeselect: handleUnselect,
-      });
-    }
-  }, [productsArray, productsBackup, allProducts, selectedItems]);
-
   const saveOrderingChanges = async () => {
-    /* setToChangeItems([]);
     setEnableFixedBar(false);
-    const body = { toChange: toChangeItems };
-    const requestOptions = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    const response = await fetch(
-      "/api/shopify/products/reorder",
-      requestOptions
-    ); */
-    setEnableFixedBar(false)
     const toChange = productsArray.map(({ id }, index) => {
       return {
         id,
-        position: index
-      }
-    })
+        position: index,
+      };
+    });
     if (toChange.length > 250) {
-      const iterations = Math.ceil(toChange.length / 250)
-      const toChangeChunks = [...chunks(toChange, 250)]
-      let promises = []
+      const iterations = Math.ceil(toChange.length / 250);
+      const toChangeChunks = [...chunks(toChange, 250)];
+      let promises = [];
       for (let i = 0; i < iterations; i++) {
-        promises = [...promises, fetch("/api/shopify/products/reorder",
-          {
+        promises = [
+          ...promises,
+          fetch("/api/shopify/products/reorder", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               collection_id: selectedCollection,
-              toChange: toChangeChunks[i]
-            })
-          })];
-        console.log("chunk", toChangeChunks[i])
+              toChange: toChangeChunks[i],
+            }),
+          }),
+        ];
+        console.log("chunk", toChangeChunks[i]);
       }
       Promise.all(promises)
-        .then(res => {
-          console.log("good", res)
-          toggleActiveToastOrder()
-        }).catch(err => {
-          console.log(error)
+        .then((res) => {
+          console.log("good", res);
+          toggleActiveToastOrder();
         })
+        .catch((err) => {
+          console.log(error);
+        });
       /*    console.log([...chunks(productsArray,250)]) */
       //console.log("pro",promises)
     } else {
       try {
-        const response = await fetch(
-          "/api/shopify/products/reorder",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              collection_id: selectedCollection,
-              toChange
-            })
-          }
-        );
-        console.log("order", response)
-        toggleActiveToastOrder()
+        const response = await fetch("/api/shopify/products/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            collection_id: selectedCollection,
+            toChange,
+          }),
+        });
+        console.log("order", response);
+        toggleActiveToastOrder();
       } catch (error) {
         console.log(error);
       }
     }
-    
-    /* switch(productsState.collectInfo.type){
-      case "smart":
-        console.log("smart")
-        break
-      case "custom":
-      const responseOrder = await api({
-        method: "PUT",
-        endpoint: `/admin/api/2023-01/custom_collections/${selectedCollection}.json`,
-        data: {
-          custom_collection:{
-            id: selectedCollection,
-            collects: [
-              {
-                product_id: 7392837468312,
-                position: 1
-              },
-              {
-                product_id: 7392838746264,
-                position: 2
-              }
-            ]
-          }
-        }
-      });
-    } */
-  };
-
-  const handleUnselect = (e) => {
-    console.log(e);
-    let newObject = { id: e.item.id, index: e.oldIndex };
-    let objectIndex = selectedItems.findIndex(
-      (object) => object.id === newObject.id
-    );
-
-    selectedItems.splice(objectIndex, 1);
-    setSelectedItems(selectedItems);
-
-    if (selectedItems.length < 1) {
-      //console.log("< 1");
-      setEnableBulkBar(false);
-    } else {
-      setEnableBulkBar(true);
-    }
   };
 
   const handlePageChange = (newPage) => {
+    refTemp.current = [];
     setCurrentPage(newPage);
   };
 
-  const handleSortEnd = ({ newIndex, oldIndex, item }) => {
-    // Create a shallow copy of the products array
-    let newProductsArray = productsArray;
 
-    // Get the item that was moved
-    let movedProduct = newProductsArray[oldIndex];
-
-    // Remove the item from its original position
-    newProductsArray.splice(oldIndex, 1);
-
-    // Insert the item at its new position
-    newProductsArray.splice(newIndex, 0, movedProduct);
-
-    handleChangeArray(newProductsArray);
-
-    /*
-    let sortOrder = productsArray;
-    console.log("oldIndex", oldIndex);
-    console.log("newIndex", newIndex);
-    let neighborIndex;
-    let currentIndex = sortOrder.findIndex((x) => x.id === item.id);
-    sortOrder.splice(
-      sortOrder.findIndex((x) => x.id === item.id),
-      1
-    );
-    if (oldIndex < newIndex)
-      neighborIndex =
-        sortOrder.findIndex((x) => x.id === item.previousElementSibling.id) + 1;
-    else
-      neighborIndex = sortOrder.findIndex(
-        (x) => x.id === item.nextElementSibling.id
-      );
-    sortOrder.splice(neighborIndex, 0, productsArray[currentIndex]); 
-    console.log(sortOrder);
-    setProductsArray(sortOrder);
-    */
-  };
-  const reorderProducts = (array, currentIndex, newIndex) => {
-    if (
-      currentIndex < 0 ||
-      currentIndex >= array.length ||
-      newIndex < 0 ||
-      newIndex >= array.length
-    ) {
-      //console.log([currentIndex,newIndex,array])
-      return "Invalid index";
+  const updateNewList = (newElements) =>{
+    if(paginatedProducts.length){
+      console.log(newElements);
+      const newProductsArray = [...productsArray];
+      const numberOfElementsToReplace = newElements.length;
+      const startIndexToReplace = newProductsArray.findIndex(item=>item.id===paginatedProducts[0].id) ;
+      newProductsArray.splice(startIndexToReplace, numberOfElementsToReplace, ...newElements );
+      // console.clear()
+      // console.log("🚀 ~ file: ProductsRender.jsx:258 ~ updateNewList ~ oldProductsArray:", newProductsArray)
+      // console.log("OLD",productsArray)
+      // console.log("NEW",newProductsArray)
+      setProductsArray(newProductsArray);
     }
+  }
 
-    var temp = array[currentIndex];
-    array[currentIndex] = array[newIndex];
-    array[newIndex] = temp;
-    return array;
-  };
+  const [selectedItems2,setSelectedItems2] = useState([])
+  const [chooseAnyProduct,setChooseAnyProduct] = useState(false)
 
-  const bulkPositionChange = (newPosition) => {
-    let totalFlag = selectedItems.length;
-    let flag = 0;
+  const [showModalQuickActions,setShowModalQuickActions] = useState(false)
+  const refTemp = useRef([]);
 
-    selectedItemsBackup.forEach((element, index) => {
-      const newPositionNumber = Number(newPosition) + Number(flag);
+  const saveSelectionAndOpenQuickActionsModal = (e) =>{
+    e.preventDefault();
+    if(chooseAnyProduct)
+      refTemp.current = selectedItems2;
+    window.setTimeout(()=>{
+      refTemp.current.forEach(node=>node.classList.add('selected'))
+    },100);
+    setShowModalQuickActions(true)
+  }
 
-      const reordered = reorderProducts(
-        productsArray,
-        element.index,
-        newPositionNumber
-      );
-      console.log(reordered);
-      handleChangeArray(reordered);
-      setProductsArray(reordered);
-      flag++;
-    });
-  };
+  const handleCloseModalQuickActions = () =>{
+    refTemp.current.forEach(node=>Sortable.utils.select(node))
+    setChooseAnyProduct(false);
+    setShowModalQuickActions(false)
+  } 
+  const clearSelectionRef = () =>{
+    // refTemp.current.forEach(node=>node.classList.remove('selected'))
+    // refTemp.current = [];
+  }
+
+
 
   return (
     <>
       <>
-
         <input
           readOnly
           ref={auxInputCurrentPage}
@@ -478,8 +313,26 @@ const ProductsRender = ({
           type="hidden"
           value={productPerPage}
         />
-
-        <div ref={gridEl} className="Polaris-Grid">
+        <button onMouseDown={saveSelectionAndOpenQuickActionsModal}>Quick Actions</button>
+      <ReactSortable 
+          sort={isSortable}
+          onSelect={(e)=>{
+            setSelectedItems2(e.items)
+          }}
+          onChoose={()=>{
+            setChooseAnyProduct(true);
+          }}
+          onDeselect={(e)=>{
+            setSelectedItems2(e.items)
+          }}
+          onEnd={(elem)=>{
+            if(refTemp.current.length>1)
+              elem.item.classList.add('selected');
+          }}
+          selectedClass='selected' 
+          multiDrag={true}  
+          ref={gridEl} 
+          className="Polaris-Grid" list={paginatedProducts} setList={updateNewList}>
           {paginatedProducts.length > 0 &&
             paginatedProducts.map((product, index) => {
               if (
@@ -534,9 +387,12 @@ const ProductsRender = ({
                     />
                   </label>
                 );
+              }else{
+                return <></>
               }
             })}
-        </div>
+        
+      </ReactSortable>
       </>
       <Pagination
         hasNext={currentPage < Math.ceil(productsArray.length / productPerPage)}
@@ -567,10 +423,10 @@ const ProductsRender = ({
           <Layout.Section>
             <Button
               primary
-              onClick={() => {
-                console.log("bulk ");
-                console.log(selectedItems);
-              }}
+              // onClick={() => {
+              //   console.log("bulk ");
+              //   console.log(selectedItems);
+              // }}
             >
               bulk actions
             </Button>
@@ -580,7 +436,7 @@ const ProductsRender = ({
       <Modal
         open={activeModal}
         title="Bulk Actions"
-        onClose={_ => {
+        onClose={(_) => {
           setActiveModal(false);
           setOpenBulkModal(false);
         }}
@@ -624,9 +480,27 @@ const ProductsRender = ({
           </p>
         </Modal.Section>
       </Modal>
-      <Frame>{activeToast && <Toast content="All products loaded" duration={3000} onDismiss={toggleActiveToast} />}
-        {activeToastOrder && <Toast content="Changues saved" duration={3000} onDismiss={toggleActiveToast} />}</Frame>
-
+      <ModalQuickActions 
+          showModal={showModalQuickActions} 
+          selectedItems={refTemp.current} 
+          closeModal={handleCloseModalQuickActions} 
+          clearSelection={clearSelectionRef} />
+      <Frame>
+        {activeToast && (
+          <Toast
+            content="All products loaded"
+            duration={3000}
+            onDismiss={toggleActiveToast}
+          />
+        )}
+        {activeToastOrder && (
+          <Toast
+            content="Changues saved"
+            duration={3000}
+            onDismiss={toggleActiveToast}
+          />
+        )}
+      </Frame>
     </>
   );
 };

@@ -48,12 +48,12 @@ export const NotManualCollectionAdvertise = ({ api, setSelectedCollection }) => 
       <Modal
         open={active}
         onClose={cancel}
-        title="Sort Order must be set to manual"
-        primaryAction={{
+        title="Update Collection Sort Order"
+        secondaryActions={{
           content: "No, Skip This Collection",
           onAction: cancel,
         }}
-        secondaryActions={[
+        primaryAction={[
           {
             content: "Set Sort Order to Manual",
             onAction: setCollectionToManual
@@ -62,7 +62,7 @@ export const NotManualCollectionAdvertise = ({ api, setSelectedCollection }) => 
       >
         <Modal.Section>
           <TextContainer>
-            <p>The current sort order is best-selling.</p>
+            <p>The app requires the collection's sort order to be set to manual in order to enable its options. Currently, the sort order is set to "Best-Selling".</p>
           </TextContainer>
         </Modal.Section>
       </Modal>
