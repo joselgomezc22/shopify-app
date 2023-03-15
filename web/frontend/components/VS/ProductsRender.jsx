@@ -19,11 +19,12 @@ import ReorderHelper from "../../hooks/reorderHelper";
 
 import { useSelector } from "react-redux";
 import { sortBy } from "../../hooks/SortByHelper";
-import { chunks } from "../../utils/tools";
+import { chunks, reorderAPI, reorderAPIMultiple } from "../../utils/tools";
 
 import { ReactSortable } from "react-sortablejs";
-import Sortable, { MultiDrag} from "sortablejs"
+import Sortable, { MultiDrag } from "sortablejs"
 import ModalQuickActions from "./ModalQuickActions";
+import { setDefaultArray } from "../../redux/slices/productsSlice";
 
 function mountMultiDragPlugin() {
   if (typeof window === 'undefined') {
@@ -62,7 +63,7 @@ const ProductsRender = ({
   const [productsArray, setProductsArray] = useState(allProducts);
 
   const { mountedSort, setMountedSort } = useContext(ContextData);
-  const [enableFixedBar, setEnableFixedBar] = useState(false);
+  const [enableFixedBar, setEnableFixedBar] = useState(true); //// CHANGUEEEEEEEE
   const [enableBulkBar, setEnableBulkBar] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]); // selected Items
   const [selectedItemsBackup, setSelectedItemsBackup] = useState([]); // selected Items
@@ -131,6 +132,7 @@ const ProductsRender = ({
       if (productsState.loadedAllProducts) {
         console.log("loaded all products");
         toggleActiveToast();
+        setDefaultArray([...productsArray, ...productsState.nextGroup])
         setProductsArray([...productsArray, ...productsState.nextGroup]);
       }
     },
@@ -175,9 +177,9 @@ const ProductsRender = ({
       };
     });
 
-    productsArrayMap = productsArrayMap.filter(product=>{
-      return  (product.published_at != null &&
-      displaySettings.published != true)|| displaySettings.published == true
+    productsArrayMap = productsArrayMap.filter(product => {
+      return (product.published_at != null &&
+        displaySettings.published != true) || displaySettings.published == true
     })
 
     setProductsArray(productsArrayMap);
@@ -196,57 +198,48 @@ const ProductsRender = ({
   }, [currentPage, productsArray, productPerPage]);
 
   const saveOrderingChanges = async () => {
-    setEnableFixedBar(false);
-    const toChange = productsArray.map(({ id }, index) => {
-      return {
-        id,
-        position: index,
-      };
-    });
-    if (toChange.length > 250) {
-      const iterations = Math.ceil(toChange.length / 250);
-      const toChangeChunks = [...chunks(toChange, 250)];
-      let promises = [];
-      for (let i = 0; i < iterations; i++) {
-        promises = [
-          ...promises,
-          fetch("/api/shopify/products/reorder", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              collection_id: selectedCollection,
-              toChange: toChangeChunks[i],
-            }),
-          }),
-        ];
-        console.log("chunk", toChangeChunks[i]);
+    /* if (filterState.filter === "") {
+      const toChange = productsArray.reduce((changues, item, index) => {
+        if(item.id !== productsState.defaultArray[index].id){
+          console.log("diff")
+          return changues =  [...changues, { 
+            id: productsState.defaultArray[index].id,
+            position: index
+          }]
+        }
+      },[])
+      console.log("no bulk actions", toChange)
+      //reorderAPI(selectedCollection, toChange)
+    } else { */
+      setEnableFixedBar(false);
+      const toChange = productsArray.map(({ id }, index) => {
+        return {
+          id,
+          position: index,
+        };
+      });
+      if (toChange.length > 250) {
+        const iterations = Math.ceil(toChange.length / 250);
+        const toChangeChunks = [...chunks(toChange, 250)];
+        let promises = [];
+        for (let i = 0; i < iterations; i++) {
+          promises = [
+            ...promises,
+            reorderAPIMultiple(selectedCollection, toChangeChunks)
+          ];
+        }
+        Promise.all(promises)
+          .then((res) => {
+            console.log("good", res);
+            //toggleActiveToastOrder();
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      } else {
+        reorderAPI(selectedCollection, toChange)
       }
-      Promise.all(promises)
-        .then((res) => {
-          console.log("good", res);
-          toggleActiveToastOrder();
-        })
-        .catch((err) => {
-          console.log(error);
-        });
-      /*    console.log([...chunks(productsArray,250)]) */
-      //console.log("pro",promises)
-    } else {
-      try {
-        const response = await fetch("/api/shopify/products/reorder", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            collection_id: selectedCollection,
-            toChange,
-          }),
-        });
-        console.log("order", response);
-        toggleActiveToastOrder();
-      } catch (error) {
-        console.log(error);
-      }
-    }
+   /*  } */
   };
 
   const handlePageChange = (newPage) => {
@@ -255,13 +248,13 @@ const ProductsRender = ({
   };
 
 
-  const updateNewList = (newElements) =>{
-    if(paginatedProducts.length){
+  const updateNewList = (newElements) => {
+    if (paginatedProducts.length) {
       console.log(newElements);
       const newProductsArray = [...productsArray];
       const numberOfElementsToReplace = newElements.length;
-      const startIndexToReplace = newProductsArray.findIndex(item=>item.id===paginatedProducts[0].id) ;
-      newProductsArray.splice(startIndexToReplace, numberOfElementsToReplace, ...newElements );
+      const startIndexToReplace = newProductsArray.findIndex(item => item.id === paginatedProducts[0].id);
+      newProductsArray.splice(startIndexToReplace, numberOfElementsToReplace, ...newElements);
       // console.clear()
       // console.log("🚀 ~ file: ProductsRender.jsx:258 ~ updateNewList ~ oldProductsArray:", newProductsArray)
       // console.log("OLD",productsArray)
@@ -270,28 +263,28 @@ const ProductsRender = ({
     }
   }
 
-  const [selectedItems2,setSelectedItems2] = useState([])
-  const [chooseAnyProduct,setChooseAnyProduct] = useState(false)
+  const [selectedItems2, setSelectedItems2] = useState([])
+  const [chooseAnyProduct, setChooseAnyProduct] = useState(false)
 
-  const [showModalQuickActions,setShowModalQuickActions] = useState(false)
+  const [showModalQuickActions, setShowModalQuickActions] = useState(false)
   const refTemp = useRef([]);
 
-  const saveSelectionAndOpenQuickActionsModal = (e) =>{
+  const saveSelectionAndOpenQuickActionsModal = (e) => {
     e.preventDefault();
-    if(chooseAnyProduct)
+    if (chooseAnyProduct)
       refTemp.current = selectedItems2;
-    window.setTimeout(()=>{
-      refTemp.current.forEach(node=>node.classList.add('selected'))
-    },100);
+    window.setTimeout(() => {
+      refTemp.current.forEach(node => node.classList.add('selected'))
+    }, 100);
     setShowModalQuickActions(true)
   }
 
-  const handleCloseModalQuickActions = () =>{
-    refTemp.current.forEach(node=>Sortable.utils.select(node))
+  const handleCloseModalQuickActions = () => {
+    refTemp.current.forEach(node => Sortable.utils.select(node))
     setChooseAnyProduct(false);
     setShowModalQuickActions(false)
-  } 
-  const clearSelectionRef = () =>{
+  }
+  const clearSelectionRef = () => {
     // refTemp.current.forEach(node=>node.classList.remove('selected'))
     // refTemp.current = [];
   }
@@ -314,24 +307,24 @@ const ProductsRender = ({
           value={productPerPage}
         />
         <button onMouseDown={saveSelectionAndOpenQuickActionsModal}>Quick Actions</button>
-      <ReactSortable 
+        <ReactSortable
           sort={isSortable}
-          onSelect={(e)=>{
+          onSelect={(e) => {
             setSelectedItems2(e.items)
           }}
-          onChoose={()=>{
+          onChoose={() => {
             setChooseAnyProduct(true);
           }}
-          onDeselect={(e)=>{
+          onDeselect={(e) => {
             setSelectedItems2(e.items)
           }}
-          onEnd={(elem)=>{
-            if(refTemp.current.length>1)
+          onEnd={(elem) => {
+            if (refTemp.current.length > 1)
               elem.item.classList.add('selected');
           }}
-          selectedClass='selected' 
-          multiDrag={true}  
-          ref={gridEl} 
+          selectedClass='selected'
+          multiDrag={true}
+          ref={gridEl}
           className="Polaris-Grid" list={paginatedProducts} setList={updateNewList}>
           {paginatedProducts.length > 0 &&
             paginatedProducts.map((product, index) => {
@@ -387,12 +380,12 @@ const ProductsRender = ({
                     />
                   </label>
                 );
-              }else{
+              } else {
                 return <></>
               }
             })}
-        
-      </ReactSortable>
+
+        </ReactSortable>
       </>
       <Pagination
         hasNext={currentPage < Math.ceil(productsArray.length / productPerPage)}
@@ -423,10 +416,10 @@ const ProductsRender = ({
           <Layout.Section>
             <Button
               primary
-              // onClick={() => {
-              //   console.log("bulk ");
-              //   console.log(selectedItems);
-              // }}
+            // onClick={() => {
+            //   console.log("bulk ");
+            //   console.log(selectedItems);
+            // }}
             >
               bulk actions
             </Button>
@@ -480,11 +473,14 @@ const ProductsRender = ({
           </p>
         </Modal.Section>
       </Modal>
-      <ModalQuickActions 
-          showModal={showModalQuickActions} 
-          selectedItems={refTemp.current} 
-          closeModal={handleCloseModalQuickActions} 
-          clearSelection={clearSelectionRef} />
+      <ModalQuickActions
+        showModal={showModalQuickActions}
+        selectedItems={refTemp.current}
+        closeModal={handleCloseModalQuickActions}
+        clearSelection={clearSelectionRef}
+        productsArray={productsArray}
+        setProductsArray={setProductsArray}
+        perPage={productPerPage} />
       <Frame>
         {activeToast && (
           <Toast

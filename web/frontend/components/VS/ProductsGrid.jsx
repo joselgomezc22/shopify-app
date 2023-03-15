@@ -97,7 +97,6 @@ export const ProductsGrid = ({
 
         return {
           id: product.id,
-          /* collect_id: collects[index].id, */
           images: product.images,
           title: product.title,
           product_type: product.product_type,

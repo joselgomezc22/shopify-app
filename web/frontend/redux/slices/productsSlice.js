@@ -34,7 +34,7 @@ const productsSlice = createSlice({
             }
         },
         setDefaultArray: (state, action) => {
-
+            state.defaultArray = action.payload
         },
         setSelectedColl: (state, action) => {
             state.selectedCollection = action.payload
