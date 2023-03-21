@@ -17,7 +17,7 @@ import { ContextData } from "../../Routes";
 import { useAuthenticatedFetch } from "../../hooks";
 import ReorderHelper from "../../hooks/reorderHelper";
 
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { sortBy } from "../../hooks/SortByHelper";
 import { chunks, reorderAPI, reorderAPIMultiple } from "../../utils/tools";
 
@@ -72,6 +72,7 @@ const ProductsRender = ({
   //redux state
   const filterState = useSelector((state) => state.filter);
   const productsState = useSelector((state) => state.products);
+  const dispatch = useDispatch()
   //toast
   const [activeToast, setActiveToast] = useState(false);
   const toggleActiveToast = useCallback(
@@ -132,7 +133,7 @@ const ProductsRender = ({
       if (productsState.loadedAllProducts) {
         console.log("loaded all products");
         toggleActiveToast();
-        setDefaultArray([...productsArray, ...productsState.nextGroup])
+        dispatch(setDefaultArray([...productsArray, ...productsState.nextGroup]))
         setProductsArray([...productsArray, ...productsState.nextGroup]);
       }
     },
@@ -198,8 +199,10 @@ const ProductsRender = ({
   }, [currentPage, productsArray, productPerPage]);
 
   const saveOrderingChanges = async () => {
-    /* if (filterState.filter === "") {
-      const toChange = productsArray.reduce((changues, item, index) => {
+    if (filterState.filter === "") {
+      console.log(productsState.defaultArray)
+      /* const toChange = productsArray.reduce((changues, item, index) => {
+        console.log(item.id, productsState.defaultArray[index].id)
         if(item.id !== productsState.defaultArray[index].id){
           console.log("diff")
           return changues =  [...changues, { 
@@ -207,10 +210,10 @@ const ProductsRender = ({
             position: index
           }]
         }
-      },[])
-      console.log("no bulk actions", toChange)
+      },[]) */
+    /*   console.log("no bulk actions", toChange) */
       //reorderAPI(selectedCollection, toChange)
-    } else { */
+    } else {
       setEnableFixedBar(false);
       const toChange = productsArray.map(({ id }, index) => {
         return {
@@ -239,7 +242,7 @@ const ProductsRender = ({
       } else {
         reorderAPI(selectedCollection, toChange)
       }
-   /*  } */
+    }
   };
 
   const handlePageChange = (newPage) => {
