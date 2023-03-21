@@ -19,12 +19,16 @@ import ReorderHelper from "../../hooks/reorderHelper";
 
 import { useDispatch, useSelector } from "react-redux";
 import { sortBy } from "../../hooks/SortByHelper";
-import { chunks, reorderAPI, reorderAPIMultiple } from "../../utils/tools";
+import { chunks } from "../../utils/tools";
 
 import { ReactSortable } from "react-sortablejs";
 import Sortable, { MultiDrag } from "sortablejs"
 import ModalQuickActions from "./ModalQuickActions";
 import { setDefaultArray } from "../../redux/slices/productsSlice";
+
+import { setAutoFreeze } from 'immer';
+
+setAutoFreeze(false);
 
 function mountMultiDragPlugin() {
   if (typeof window === 'undefined') {
@@ -63,7 +67,7 @@ const ProductsRender = ({
   const [productsArray, setProductsArray] = useState(allProducts);
 
   const { mountedSort, setMountedSort } = useContext(ContextData);
-  const [enableFixedBar, setEnableFixedBar] = useState(true); //// CHANGUEEEEEEEE
+  const [enableFixedBar, setEnableFixedBar] = useState(false); 
   const [enableBulkBar, setEnableBulkBar] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]); // selected Items
   const [selectedItemsBackup, setSelectedItemsBackup] = useState([]); // selected Items
@@ -138,9 +142,8 @@ const ProductsRender = ({
       }
     },
     [productsState.loadedAllProducts]
-  );
+  ); 
   useEffect(() => {
-    console.log(productsArray);
     if (
       displaySettings.selectedItems &&
       displaySettings.selectedItems.length > 0
@@ -150,7 +153,8 @@ const ProductsRender = ({
         currentPage,
       });
       if (reOrdered.length > 0) {
-        setProductsArray(reOrdered);
+        setProductsArray(reOrdered.map(({selected, chosen, ...rest})=>{return{...rest}}));
+        setEnableFixedBar(true);
       }
     }
   }, [displaySettings]);
@@ -195,8 +199,45 @@ const ProductsRender = ({
       indexOfLastProduct
     );
     console.log(indexOfLastProduct);
-    setPaginatedProducts(currentProducts);
+    const products = currentProducts.map(({ chosen, ...rest})=>{return{...rest}})
+    setPaginatedProducts(products);
+    clearSelectionRef(products);
   }, [currentPage, productsArray, productPerPage]);
+
+
+  /**
+   * 
+   */
+
+  const reorderAPI = async (selectedCollection, toChange) => {
+    try {
+      const response = await fetch("/api/shopify/products/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          collection_id: selectedCollection,
+          toChange,
+        }),
+      });
+      //console.log("order", response);
+      toggleActiveToastOrder();
+      setTimeout(() => {
+        toggleActiveToastOrder();
+      }, 1000);
+      
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  
+  const reorderAPIMultiple = (selectedCollection, toChangeChunks) => fetch("/api/shopify/products/reorder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      collection_id: selectedCollection,
+      toChange: toChangeChunks[i],
+    }),
+  })
 
   const saveOrderingChanges = async () => {
     if (filterState.filter === "") {
@@ -233,13 +274,17 @@ const ProductsRender = ({
         }
         Promise.all(promises)
           .then((res) => {
-            console.log("good", res);
-            //toggleActiveToastOrder();
+            //console.log("good", res);
+            toggleActiveToastOrder();
+            setTimeout(() => {
+              toggleActiveToastOrder();
+            }, 1000);
           })
           .catch((err) => {
             console.log(err);
           });
       } else {
+        console.log("here");
         reorderAPI(selectedCollection, toChange)
       }
     }
@@ -277,7 +322,10 @@ const ProductsRender = ({
     if (chooseAnyProduct)
       refTemp.current = selectedItems2;
     window.setTimeout(() => {
-      refTemp.current.forEach(node => node.classList.add('selected'))
+      refTemp.current.forEach(node => {
+        if(node)
+          node.classList.add('selected')
+        })
     }, 100);
     setShowModalQuickActions(true)
   }
@@ -287,9 +335,25 @@ const ProductsRender = ({
     setChooseAnyProduct(false);
     setShowModalQuickActions(false)
   }
-  const clearSelectionRef = () => {
-    // refTemp.current.forEach(node=>node.classList.remove('selected'))
-    // refTemp.current = [];
+  const clearSelectionRef = (products) => {
+      const itemsToDelete = []
+      refTemp.current.forEach(node=>{
+        const id = Number(node.getAttribute('data-id'));
+        const isElementInCurrentPage = products.find(product=>product.id===id)
+        if(!isElementInCurrentPage){
+          node.classList.remove('selected');
+          Sortable.utils.deselect(node);
+          itemsToDelete.push(id)
+        }
+      })
+      const elementsInCurrentPage = refTemp.current.filter(node=>!itemsToDelete.includes(Number(node.getAttribute('data-id'))))
+      refTemp.current = elementsInCurrentPage
+      
+  }
+
+  const getItemsWithClassNameSelected = () =>{
+    return document.querySelectorAll('.product-item.selected').length > 0
+    
   }
 
 
@@ -309,8 +373,11 @@ const ProductsRender = ({
           type="hidden"
           value={productPerPage}
         />
-        <button onMouseDown={saveSelectionAndOpenQuickActionsModal}>Quick Actions</button>
+        {(getItemsWithClassNameSelected() || showModalQuickActions) && (
+          <button className="Polaris-Button" onMouseDown={saveSelectionAndOpenQuickActionsModal}><span className="Polaris-Button__Content">Quick Actions</span></button>
+        )}
         <ReactSortable
+
           sort={isSortable}
           onSelect={(e) => {
             setSelectedItems2(e.items)
@@ -324,8 +391,10 @@ const ProductsRender = ({
           onEnd={(elem) => {
             if (refTemp.current.length > 1)
               elem.item.classList.add('selected');
+              setEnableFixedBar(true);
           }}
           selectedClass='selected'
+          multiDragKey={'CTRL'}
           multiDrag={true}
           ref={gridEl}
           className="Polaris-Grid" list={paginatedProducts} setList={updateNewList}>
@@ -337,7 +406,7 @@ const ProductsRender = ({
               ) {
                 return (
                   <label
-                    className={`Polaris-Grid-Cell Polaris-Grid-Cell--cell_${columns}ColumnXs Polaris-Grid-Cell--cell_${columns}ColumnSm Polaris-Grid-Cell--cell_${columns}ColumnMd Polaris-Grid-Cell--cell_${columns}ColumnLg Polaris-Grid-Cell--cell_${columns}ColumnXl`}
+                    className={`Polaris-Grid-Cell Polaris-Grid-Cell--cell_${columns}ColumnXs Polaris-Grid-Cell--cell_${columns}ColumnSm Polaris-Grid-Cell--cell_${columns}ColumnMd Polaris-Grid-Cell--cell_${columns}ColumnLg Polaris-Grid-Cell--cell_${columns}ColumnXl product-item`}
                     id={product.id}
                     key={product.id}
                   >
@@ -361,7 +430,7 @@ const ProductsRender = ({
               } else if (displaySettings.published == true) {
                 return (
                   <label
-                    className={`Polaris-Grid-Cell Polaris-Grid-Cell--cell_${columns}ColumnXs Polaris-Grid-Cell--cell_${columns}ColumnSm Polaris-Grid-Cell--cell_${columns}ColumnMd Polaris-Grid-Cell--cell_${columns}ColumnLg Polaris-Grid-Cell--cell_${columns}ColumnXl`}
+                    className={`Polaris-Grid-Cell Polaris-Grid-Cell--cell_${columns}ColumnXs Polaris-Grid-Cell--cell_${columns}ColumnSm Polaris-Grid-Cell--cell_${columns}ColumnMd Polaris-Grid-Cell--cell_${columns}ColumnLg Polaris-Grid-Cell--cell_${columns}ColumnXl product-item`}
                     id={product.id}
                     key={product.id}
                   >

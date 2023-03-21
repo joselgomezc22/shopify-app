@@ -346,8 +346,14 @@ export async function createServer(
         },
       },
     });
+    if(dataMutation?.body?.data.collectionReorderProducts.userErrors.length == 0){
+      console.log('cool');
 
-    console.log(dataMutation?.body?.data.collectionReorderProducts.userErrors);
+      res.status(200).send(dataMutation);
+    }else {
+      res.status(400).send(dataMutation?.body?.data.collectionReorderProducts.userErrors);
+    }
+    
 
     /*const queryString = `{
       products (first: 3) {
