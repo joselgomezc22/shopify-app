@@ -20,9 +20,11 @@ const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSel
       let start = filterProducts.slice().splice(0, newValue)
       const end = filterProducts.slice().splice(newValue)
       start = [...start, ...reorderProducts]
-      const defArray = [...start, ...end]
-      /* console.log(defArray) */
-      dispatch(setArrayProducts(defArray))
+      const defArray = [...start, ...end].map(({chosen, ...rest}) => {
+        return rest;
+      });
+      console.log(defArray);
+      // dispatch(setArrayProducts(defArray))
       setProductsArray(defArray)
     } else {
       const totalPages = Math.ceil(productsArray.length / perPage)
@@ -31,10 +33,12 @@ const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSel
       pages[newValue] = [...reorderProducts, ...pages[newValue]]
       /* console.log("paginated order",pages.flat()) */
       dispatch(setArrayProducts(pages.flat()))
-      setProductsArray(pages.flat())
+      const newProducts = pages.flat().map(({chosen, ...rest}) => {
+        return rest;
+      });
+      setProductsArray(newProducts)
     }
     closeModal();
-    clearSelection();
   }
   return (
     <Modal
@@ -42,7 +46,7 @@ const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSel
       title="Quick Actions"
       onClose={(_) => {
         closeModal();
-        clearSelection();
+        // clearSelection();
       }}
       primaryAction={{
         content: "Done",
@@ -53,21 +57,13 @@ const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSel
           content: "Cancel",
           onAction: () => {
             closeModal();
-            clearSelection();
+            // clearSelection();
           },
         },
       ]}
     >
       <Modal.Section>
-        <TextContainer>
-          <p>
-            <ul>
-              {selectedItems.map((item, index) => {
-                return <li>{item.getAttribute('data-id')}</li>
-              })}
-            </ul>
-          </p>
-        </TextContainer>
+        
       </Modal.Section>
       <Modal.Section>
         <Select

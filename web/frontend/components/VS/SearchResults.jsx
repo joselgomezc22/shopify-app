@@ -24,6 +24,7 @@ const SearchResults = ({
     if (allProducts.length > 0) {
       setSearchResult([]);
       setSearchTerm("");
+      setSelectedItems([]);
     }
   }, [allProducts]);
 
@@ -167,6 +168,7 @@ const SearchResults = ({
             .includes(term)
       )
       .slice(0, 9);
+    setSelectedItems([]);
     setSearchResult(result);
     return result;
   };
