@@ -84,7 +84,7 @@ export default function HomePage() {
         setPrimaryAction(null);
       }
     },
-    [products]
+    [productsState.loadedAllProducts]
   );
   const api = async (body) => {
     /**

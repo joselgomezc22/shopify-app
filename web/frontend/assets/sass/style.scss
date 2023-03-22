@@ -23,6 +23,15 @@ $green: var(--p-action-primary);
   margin-top: var(--p-space-5);
 }
 
+.load_state{
+  height: 100%;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 10px;
+}
+
 
 
 

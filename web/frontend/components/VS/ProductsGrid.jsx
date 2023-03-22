@@ -61,19 +61,12 @@ export const ProductsGrid = ({
 
       const { collection: { collection_type, products_count, sort_order
       } } = collectionInfo
+      console.log("total products ", products_count)
       dispatch(setcollectInfo({
         type: collection_type,
         totalProducts: products_count,
         sort_order
       }))
-
-      /* const request2 = await api({
-        method: "GET",
-        endpoint: `/admin/api/2022-04/collects.json?collection_id=${selectedCollection}&limit=250`,
-      });
-
-      console.log(request2)
-      const {collects} = request2 */
 
       const request = await apiWithPagination({
         method: "GET",

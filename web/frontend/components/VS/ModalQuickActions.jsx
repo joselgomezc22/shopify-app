@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react'
 import { Modal, Select, TextContainer, TextField } from '@shopify/polaris';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setArrayProducts } from '../../redux/slices/productsSlice';
 import { chunks } from '../../utils/tools';
 
 const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSelection, productsArray, setProductsArray, perPage }) => {
 
+  const productsState = useSelector(state => state.products)
   const dispatch = useDispatch()
   const [selectedOpt, setSelectedOpt] = useState("position")
   const [value, setValue] = useState('');
@@ -17,26 +18,33 @@ const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSel
     const filterProducts = productsArray.filter(item => !selectedItems.some(itemSelected => itemSelected.getAttribute('data-id') == item.id))
     const reorderProducts = productsArray.filter(item => selectedItems.some(itemSelected => itemSelected.getAttribute('data-id') == item.id))
     if (selectedOpt === "position") {
-      let start = filterProducts.slice().splice(0, newValue)
-      const end = filterProducts.slice().splice(newValue)
-      start = [...start, ...reorderProducts]
-      const defArray = [...start, ...end].map(({chosen, ...rest}) => {
-        return rest;
-      });
-      console.log(defArray);
-      // dispatch(setArrayProducts(defArray))
-      setProductsArray(defArray)
+      if (reorderProducts.length + (+value) <= productsState.collectInfo.totalProducts) {
+        let start = filterProducts.slice().splice(0, newValue)
+        const end = filterProducts.slice().splice(newValue)
+        start = [...start, ...reorderProducts]
+        const defArray = [...start, ...end].map(({ chosen, ...rest }) => {
+          return rest;
+        });
+        // dispatch(setArrayProducts(defArray))
+        setProductsArray(defArray)
+      } else {
+        console.log("position not valid")
+      }
+
     } else {
       const totalPages = Math.ceil(productsArray.length / perPage)
-      console.log("page", perPage)
-      let pages = [...chunks(filterProducts, perPage)]
-      pages[newValue] = [...reorderProducts, ...pages[newValue]]
-      /* console.log("paginated order",pages.flat()) */
-      dispatch(setArrayProducts(pages.flat()))
-      const newProducts = pages.flat().map(({chosen, ...rest}) => {
-        return rest;
-      });
-      setProductsArray(newProducts)
+      if ((+value) <= totalPages) {
+        // console.log("page", perPage)
+        let pages = [...chunks(filterProducts, perPage)]
+        pages[newValue] = [...reorderProducts, ...pages[newValue]]
+        dispatch(setArrayProducts(pages.flat()))
+        const newProducts = pages.flat().map(({ chosen, ...rest }) => {
+          return rest;
+        });
+        setProductsArray(newProducts)
+      }else{
+        console.log("page not valid")
+      }
     }
     closeModal();
   }
@@ -63,7 +71,7 @@ const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSel
       ]}
     >
       <Modal.Section>
-        
+
       </Modal.Section>
       <Modal.Section>
         <Select

@@ -41,9 +41,19 @@ export const DashboardHeading = ({
 }) => {
   const fetch = useAuthenticatedFetch();
   const [locations, setLocations] = useState(null);
+  const [percentLoad, setPercentLoad] = useState(0)
   //global state
   const productsState = useSelector((state) => state.products);
 
+  useEffect(_ => {
+    if(productsState.arrayProducts.length !== 0){
+      const totalPercent = ((productsState.arrayProducts.length + productsState.nextGroup.length) * 100)
+      / productsState.collectInfo.totalProducts
+    setPercentLoad(Math.round(totalPercent))
+    }else{
+      setPercentLoad(0)
+    }
+  },[productsState.arrayProducts, productsState.nextGroup])
   useEffect(async () => {
     const { locations } = await api({
       method: "GET",
@@ -174,29 +184,40 @@ export const DashboardHeading = ({
           </Grid.Cell>
           <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 3, xl: 3 }}>
           </Grid.Cell>
-          <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>
-            {productsState.collectInfo.totalProducts <= 2000 &&
-              productsState.collectInfo.totalProducts > 0 &&
-              (productsState.loadedAllProducts ? (
+          {!productsState.loadedAllProducts && selectedCollection ? (
+            <Grid.Cell columnSpan={{ xs: 4, sm: 2, md: 2, lg: 4, xl: 4 }}>
+              <Card>
+                <div className="load_state">
+                  <Spinner accessibilityLabel="Loading Products" size="small" />
+                  <span>Loading products... {percentLoad} of 100% (total products in collection: {productsState.collectInfo.totalProducts ?? "--"}) </span>
+                </div>
+              </Card>
+            </Grid.Cell>
+          ) : (<>
+            <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>
+              {productsState.collectInfo.totalProducts <= 2000 &&
+                productsState.collectInfo.totalProducts > 0 &&
+                (productsState.loadedAllProducts ? (
+                  <>
+                    <SortByTool productsQuantity={products.length} />
+                  </>
+                )
+                  : selectedCollection &&
+                  <Button><Spinner accessibilityLabel="Loading Products" size="small" /></Button>)}
+            </Grid.Cell>
+            <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>
+              {products.length > 0 && (
                 <>
-                  <SortByTool productsQuantity={products.length} />
+                  <SearchResults
+                    allProducts={products}
+                    displaySettings={displaySettings}
+                    productWithVariants={products}
+                    setDisplay={setDisplay}
+                  />
                 </>
-              )
-              : selectedCollection &&
-              <Button><Spinner accessibilityLabel="Loading Products" size="small"/></Button>)}
-          </Grid.Cell>
-          <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>
-            {products.length > 0 && (
-              <>
-                <SearchResults
-                  allProducts={products}
-                  displaySettings={displaySettings}
-                  productWithVariants={products}
-                  setDisplay={setDisplay}
-                />
-              </>
-            )}
-          </Grid.Cell>
+              )}
+            </Grid.Cell>
+          </>)}
           {selectedCollection != "" && (
             <Grid.Cell columnSpan={{ xs: 2, sm: 1, md: 1, lg: 2, xl: 2 }}>
               <Modal

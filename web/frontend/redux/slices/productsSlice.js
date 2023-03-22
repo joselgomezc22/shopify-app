@@ -38,6 +38,7 @@ const productsSlice = createSlice({
         },
         setSelectedColl: (state, action) => {
             state.selectedCollection = action.payload
+            state.collectInfo.totalProducts = null
         },
         setcollectInfo: (state, action) => {
             state.collectInfo = action.payload
