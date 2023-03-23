@@ -35,6 +35,7 @@ export default function HomePage() {
   const [columns, setColumns] = useState("3");
   const [productPerPage, setPerPage] = useState("16");
   const [openBulkModal, setOpenBulkModal] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
 
   //global state
   const dispatch = useDispatch();
@@ -50,6 +51,15 @@ export default function HomePage() {
   const [primaryAction, setPrimaryAction] = useState(null);
 
   const fetch = useAuthenticatedFetch();
+
+
+  useEffect(() => {
+    setShowGrid(false);
+    setTimeout(() => {
+      setShowGrid(true);
+    }, 500);
+  }, [selectedCollection])
+  
 
   /**
    * * Display settings states
@@ -153,8 +163,9 @@ export default function HomePage() {
         setDisplay={setDisplay}
         products={products}
       />
-      <div className="margin-top">
-        <ProductsGrid
+      {showGrid &&
+        <div className="margin-top">
+          <ProductsGrid
           columns={columns}
           limit={limit}
           api={api}
@@ -165,8 +176,10 @@ export default function HomePage() {
           productPerPage={productPerPage}
           displaySettings={displaySettings}
           setProductsExternal={setProducts}
-        />
-      </div>
+          />
+        </div>
+      }
+
     </Page>
   );
 }

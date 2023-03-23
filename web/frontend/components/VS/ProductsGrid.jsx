@@ -117,7 +117,7 @@ export const ProductsGrid = ({
       setProducts([]);
       setIsLoading(false);
     }
-    setIsLoading(false);
+    // setIsLoading(false);
   }, [selectedCollection]);
 
   useEffect(_ => {
@@ -210,10 +210,10 @@ export const ProductsGrid = ({
   const requestPaginate = async (pageToken) => {
     setNextPageToken("");
     setPrevPageToken("");
-    setIsLoading(true);
+    // setIsLoading(true);
     const request = await apiWithPagination({
       method: "GET",
-      endpoint: `/admin/api/2022-10/collections/${selectedCollection}/products.json?limit=${limit}&page_info=${pageToken}`,
+      endpoint: `/admin/api/2022-10/collections/${selectedCollection}/products.json?limit=250&page_info=${pageToken}`,
     });
     const { data, link } = await request.json();
     const arrayProductsIds = data.products.map((prod) => prod.id).join(",");
@@ -243,7 +243,7 @@ export const ProductsGrid = ({
     dispatch(setNextProducts([...productsState.nextGroup, ...productsNew]))
     paginationHandler(link);
     /*  setProducts(data.products); */
-    setIsLoading(false);
+    // setIsLoading(false);
   };
   /**
    *
@@ -363,7 +363,7 @@ export const ProductsGrid = ({
 
 
 
-      {!isLoading && (
+        {!isLoading && (
         <>
           <ProductsRender
             api={api}
@@ -379,7 +379,8 @@ export const ProductsGrid = ({
             InventoryLevels={inventoryLevels}
           />
         </>
-      )}
+        )}
+      
     </>
   );
 };
