@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setArrayProducts } from '../../redux/slices/productsSlice';
 import { chunks } from '../../utils/tools';
 
-const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSelection, productsArray, setProductsArray, perPage }) => {
+const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSelection, productsArray, setProductsArray, perPage, showSaveButton }) => {
 
   const productsState = useSelector(state => state.products)
   const dispatch = useDispatch()
@@ -46,6 +46,7 @@ const ModalQuickActions = ({ showModal, closeModal, selectedItems = [], clearSel
         console.log("page not valid")
       }
     }
+    showSaveButton(true)
     closeModal();
   }
   return (

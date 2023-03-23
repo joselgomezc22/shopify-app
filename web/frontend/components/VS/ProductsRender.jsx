@@ -240,22 +240,24 @@ const ProductsRender = ({
   })
 
   const saveOrderingChanges = async () => {
+    setEnableFixedBar(false);
     if (filterState.filter === "") {
-      console.log(productsState.defaultArray)
-      /* const toChange = productsArray.reduce((changues, item, index) => {
-        console.log(item.id, productsState.defaultArray[index].id)
+      console.log("defArray",productsState.defaultArray)
+      const toChange = productsArray.reduce((changues, item, index) => {
+       // console.log(item.id, productsState.defaultArray[index].id)
+       //console.log("changue up", changues)
         if(item.id !== productsState.defaultArray[index].id){
           console.log("diff")
-          return changues =  [...changues, { 
-            id: productsState.defaultArray[index].id,
+          return [...changues, { 
+            id: item.id,
             position: index
           }]
         }
-      },[]) */
-    /*   console.log("no bulk actions", toChange) */
-      //reorderAPI(selectedCollection, toChange)
+        return changues
+      },[])
+      console.log("no bulk actions", toChange)
+      reorderAPI(selectedCollection, toChange)
     } else {
-      setEnableFixedBar(false);
       const toChange = productsArray.map(({ id }, index) => {
         return {
           id,
@@ -552,7 +554,8 @@ const ProductsRender = ({
         clearSelection={clearSelectionRef}
         productsArray={productsArray}
         setProductsArray={setProductsArray}
-        perPage={productPerPage} />
+        perPage={productPerPage}
+        showSaveButton={setEnableFixedBar} />
       <Frame>
         {activeToast && (
           <Toast
