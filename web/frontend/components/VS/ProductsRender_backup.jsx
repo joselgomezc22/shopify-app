@@ -625,7 +625,7 @@ const ProductsRender = ({
         </Modal.Section>
       </Modal>
       <Frame>{activeToast && <Toast content="All products loaded" duration={3000} onDismiss={toggleActiveToast} />}
-        {activeToastOrder && <Toast content="Changues saved" duration={3000} onDismiss={toggleActiveToast} />}</Frame>
+        {activeToastOrder && <Toast content="changes saved" duration={3000} onDismiss={toggleActiveToast} />}</Frame>
 
     </>
   );

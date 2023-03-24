@@ -87,8 +87,9 @@ export const ProductsGrid = ({
         const correspondingVariant = data_variants.products.find(
           (variant) => variant.id === product.id
         );
-
+        let i = index + 1;
         return {
+          position: i, 
           id: product.id,
           images: product.images,
           title: product.title,
@@ -228,7 +229,9 @@ export const ProductsGrid = ({
         (variant) => variant.id === product.id
       );
 
+      let i = index + 1;
       return {
+        position: i,
         id: product.id,
         images: product.images,
         title: product.title,
