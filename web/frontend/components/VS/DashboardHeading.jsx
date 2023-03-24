@@ -46,14 +46,17 @@ export const DashboardHeading = ({
   const productsState = useSelector((state) => state.products);
 
   useEffect(_ => {
-    if(productsState.arrayProducts.length !== 0){
+    if (productsState.arrayProducts.length !== 0) {
       const totalPercent = ((productsState.arrayProducts.length + productsState.nextGroup.length) * 100)
-      / productsState.collectInfo.totalProducts
-    setPercentLoad(Math.round(totalPercent))
-    }else{
+        / productsState.collectInfo.totalProducts
+      if (totalPercent >= 100) {
+        setPercentLoad(100)
+      }
+      setPercentLoad(Math.round(totalPercent))
+    } else {
       setPercentLoad(0)
     }
-  },[productsState.arrayProducts, productsState.nextGroup])
+  }, [productsState.arrayProducts, productsState.nextGroup])
   useEffect(async () => {
     const { locations } = await api({
       method: "GET",
